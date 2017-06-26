@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -23,6 +24,7 @@ module Data.Eliminator where
 import Data.Kind
 import Data.Singletons.Prelude
 import Data.Singletons.TypeLits
+import Data.Type.Equality
 import Unsafe.Coerce
 
 data FunArrow = (:->) | (:~>)
@@ -154,7 +156,7 @@ natElimPoly snat pZ pS =
                   SomeSing (sn :: Sing k) -> unsafeCoerce (pS sn (natElimPoly @arr @p @k sn pZ pS))
 
 -----
--- GADT example
+-- GADT examples
 -----
 
 data So :: Bool -> Type where
@@ -185,3 +187,41 @@ soElimPoly :: forall (arr :: FunArrow) (what :: Bool) (s :: So what)
            -> App (So what) arr Type p s
 soElimPoly SOh pOh = pOh
 -}
+
+data instance Sing (z :: a :~: b) where
+  SRefl :: Sing Refl
+
+(%:~:->) :: forall (k :: Type) (a :: k) (b :: k) (r :: a :~: b) (p :: forall (y :: k). a :~: y -> Type).
+            Sing r
+         -> p Refl
+         -> p r
+(%:~:->) SRefl pRefl = pRefl
+
+(%:~:~>) :: forall (k :: Type) (a :: k) (b :: k) (r :: a :~: b) (p :: forall (y :: k). a :~: y ~> Type).
+            Sing r
+         -> p @@ Refl
+         -> p @@ r
+(%:~:~>) SRefl pRefl = pRefl
+
+-- (%:~:-?>)
+
+data instance Sing (z :: a :~~: b) where
+  SHRefl :: Sing HRefl
+
+(%:~~:->) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (r :: a :~~: b) (p :: forall (z :: Type) (y :: z). a :~~: y -> Type).
+             Sing r
+          -> p HRefl
+          -> p r
+(%:~~:->) SHRefl pHRefl = pHRefl
+
+{-
+Why doesn't this typecheck?
+
+(%:~~:~>) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (r :: a :~~: b) (p :: forall (z :: Type) (y :: z). a :~~: y ~> Type).
+             Sing r
+          -> p @@ HRefl
+          -> p @@ r
+(%:~~:~>) SHRefl pHRefl = pHRefl
+-}
+
+-- (%:~~:-?>)
