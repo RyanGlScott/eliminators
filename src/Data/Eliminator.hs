@@ -97,10 +97,11 @@ listElimTyFun :: forall (a :: Type) (p :: [a] ~> Type) (l :: [a]).
               -> p @@ '[]
               -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p @@ xs -> p @@ (x:xs))
               -> p @@ l
+{-
 listElimTyFun SNil                      pNil _     = pNil
 listElimTyFun (SCons x (xs :: Sing xs)) pNil pCons = pCons x xs (listElimTyFun @a @p @xs xs pNil pCons)
--- Wow, a GHC panic emerges if you use this definition instead!
--- listElimTyFun = listElimPoly @(:->) @a @p @l
+-}
+listElimTyFun = listElimPoly @(:~>) @a @p @l
 
 listElimPoly :: forall (arr :: FunArrow) (a :: Type) (p :: ([a] -?> Type) arr) (l :: [a]).
                 FunApp arr
