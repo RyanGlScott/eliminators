@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE Trustworthy #-}
@@ -151,3 +152,36 @@ natElimPoly snat pZ pS =
     0        -> unsafeCoerce pZ
     nPlusOne -> case toSing (pred nPlusOne) of
                   SomeSing (sn :: Sing k) -> unsafeCoerce (pS sn (natElimPoly @arr @p @k sn pZ pS))
+
+-----
+-- GADT example
+-----
+
+data So :: Bool -> Type where
+  Oh :: So True
+
+data instance Sing (z :: So what) where
+  SOh :: Sing Oh
+
+soElim :: forall (what :: Bool) (s :: So what) (p :: forall (long_sucker :: Bool). So long_sucker -> Type).
+          Sing s
+       -> p Oh
+       -> p s
+soElim SOh pOh = pOh
+
+soElimTyFun :: forall (what :: Bool) (s :: So what) (p :: forall (long_sucker :: Bool). So long_sucker ~> Type).
+               Sing s
+            -> p @@ Oh
+            -> p @@ s
+soElimTyFun SOh pOh = pOh
+
+{-
+I don't know how to make this kind-check :(
+
+soElimPoly :: forall (arr :: FunArrow) (what :: Bool) (s :: So what)
+                     (p :: forall (long_sucker :: Bool). (So long_sucker -?> Type) arr).
+              Sing s
+           -> App (So True) arr Type p Oh
+           -> App (So what) arr Type p s
+soElimPoly SOh pOh = pOh
+-}
