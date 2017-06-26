@@ -5,9 +5,9 @@
 [![BSD3 License](http://img.shields.io/badge/license-BSD3-brightgreen.svg)][tl;dr Legal: BSD3]
 [![Build](https://img.shields.io/travis/RyanGlScott/eliminators.svg)](https://travis-ci.org/RyanGlScott/eliminators)
 
-[Hackage: text-show]:
+[Hackage: eliminators]:
   http://hackage.haskell.org/package/eliminators
-  "text-show package on Hackage"
+  "eliminators package on Hackage"
 [Haskell.org]:
   http://www.haskell.org
   "The Haskell Programming Language"
