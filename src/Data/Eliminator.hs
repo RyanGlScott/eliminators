@@ -244,18 +244,20 @@ elimWeirdList (SWeirdCons (x :: Sing (x :: z))
   = pWeirdCons @z @x @xs x xs
       (elimWeirdList @(WeirdList z) @xs @p xs pWeirdNil pWeirdCons)
 
+{-
 elimWeirdListTyFun :: forall (a :: Type) (wl :: WeirdList a)
-                             (p :: forall (x :: Type). WeirdList x -> Type).
+                             (p :: forall (x :: Type). WeirdList x ~> Type).
                       Sing wl
-                   -> (forall (y :: Type). p (WeirdNil :: WeirdList y))
+                   -> (forall (y :: Type). p @@ (WeirdNil :: WeirdList y))
                    -> (forall (z :: Type) (x :: z) (xs :: WeirdList (WeirdList z)).
-                         Sing x -> Sing xs -> p xs -> p (WeirdCons x xs))
-                   -> p wl
+                         Sing x -> Sing xs -> p @@ xs -> p @@ (WeirdCons x xs))
+                   -> p @@ wl
 elimWeirdListTyFun SWeirdNil pWeirdNil _ = pWeirdNil
 elimWeirdListTyFun (SWeirdCons (x :: Sing (x :: z))
                           (xs :: Sing (xs :: WeirdList (WeirdList z))))
               pWeirdNil pWeirdCons
   = pWeirdCons @z @x @xs x xs
       (elimWeirdListTyFun @(WeirdList z) @xs @p xs pWeirdNil pWeirdCons)
+-}
 
 -- elimWeirdListPoly
