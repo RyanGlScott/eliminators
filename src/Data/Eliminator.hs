@@ -219,3 +219,43 @@ elimObjPoly :: forall (arr :: FunArrow) (o :: Obj) (p :: (Obj -?> Type) arr).
             -> (forall (obj :: Type) (x :: obj). Sing x -> App Obj arr Type p (MkObj x))
             -> App Obj arr Type p o
 elimObjPoly (SMkObj (x :: Sing (obj :: obiwan))) pMkObj = pMkObj @obiwan @obj x
+
+-----
+
+data WeirdList :: Type -> Type where
+  WeirdNil  :: WeirdList a
+  WeirdCons :: a -> WeirdList (WeirdList a) -> WeirdList a
+
+data instance Sing (z :: WeirdList a) where
+  SWeirdNil  :: Sing WeirdNil
+  SWeirdCons :: Sing w -> Sing wws -> Sing (WeirdCons w wws)
+
+elimWeirdList :: forall (a :: Type) (wl :: WeirdList a)
+                        (p :: forall (x :: Type). WeirdList x -> Type).
+                 Sing wl
+              -> (forall (y :: Type). p (WeirdNil :: WeirdList y))
+              -> (forall (z :: Type) (x :: z) (xs :: WeirdList (WeirdList z)).
+                    Sing x -> Sing xs -> p xs -> p (WeirdCons x xs))
+              -> p wl
+elimWeirdList SWeirdNil pWeirdNil _ = pWeirdNil
+elimWeirdList (SWeirdCons (x :: Sing (x :: z))
+                          (xs :: Sing (xs :: WeirdList (WeirdList z))))
+              pWeirdNil pWeirdCons
+  = pWeirdCons @z @x @xs x xs
+      (elimWeirdList @(WeirdList z) @xs @p xs pWeirdNil pWeirdCons)
+
+elimWeirdListTyFun :: forall (a :: Type) (wl :: WeirdList a)
+                             (p :: forall (x :: Type). WeirdList x -> Type).
+                      Sing wl
+                   -> (forall (y :: Type). p (WeirdNil :: WeirdList y))
+                   -> (forall (z :: Type) (x :: z) (xs :: WeirdList (WeirdList z)).
+                         Sing x -> Sing xs -> p xs -> p (WeirdCons x xs))
+                   -> p wl
+elimWeirdListTyFun SWeirdNil pWeirdNil _ = pWeirdNil
+elimWeirdListTyFun (SWeirdCons (x :: Sing (x :: z))
+                          (xs :: Sing (xs :: WeirdList (WeirdList z))))
+              pWeirdNil pWeirdCons
+  = pWeirdCons @z @x @xs x xs
+      (elimWeirdListTyFun @(WeirdList z) @xs @p xs pWeirdNil pWeirdCons)
+
+-- elimWeirdListPoly
