@@ -33,7 +33,7 @@ class FunType (arr :: FunArrow) where
   type Fun (k1 :: Type) arr (k2 :: Type) :: Type
 
 class FunType arr => AppType (arr :: FunArrow) where
-  -- Can't be defined in the same class due to staging restrictions
+  -- Can't be defined in the same class as Fun due to staging restrictions
   type App k1 arr k2 (f :: Fun k1 arr k2) (x :: k1) :: k2
 
 type FunApp arr = (FunType arr, AppType arr)
@@ -58,10 +58,6 @@ boolElim :: forall (p :: Bool -> Type) (b :: Bool).
          -> p False
          -> p True
          -> p b
-{-
-boolElim SFalse pF _  = pF
-boolElim STrue  _  pT = pT
--}
 boolElim = boolElimPoly @(:->) @p @b
 
 boolElimTyFun :: forall (p :: Bool ~> Type) (b :: Bool).
@@ -69,10 +65,6 @@ boolElimTyFun :: forall (p :: Bool ~> Type) (b :: Bool).
               -> p @@ False
               -> p @@ True
               -> p @@ b
-{-
-boolElimTyFun SFalse pF _  = pF
-boolElimTyFun STrue  _  pT = pT
--}
 boolElimTyFun = boolElimPoly @(:~>) @p @b
 
 boolElimPoly :: forall (arr :: FunArrow) (p :: (Bool -?> Type) arr) (b :: Bool).
@@ -89,10 +81,6 @@ listElim :: forall (a :: Type) (p :: [a] -> Type) (l :: [a]).
          -> p '[]
          -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p xs -> p (x:xs))
          -> p l
-{-
-listElim SNil                      pNil _     = pNil
-listElim (SCons x (xs :: Sing xs)) pNil pCons = pCons x xs (listElim @a @p @xs xs pNil pCons)
--}
 listElim = listElimPoly @(:->) @a @p @l
 
 listElimTyFun :: forall (a :: Type) (p :: [a] ~> Type) (l :: [a]).
@@ -100,10 +88,6 @@ listElimTyFun :: forall (a :: Type) (p :: [a] ~> Type) (l :: [a]).
               -> p @@ '[]
               -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p @@ xs -> p @@ (x:xs))
               -> p @@ l
-{-
-listElimTyFun SNil                      pNil _     = pNil
-listElimTyFun (SCons x (xs :: Sing xs)) pNil pCons = pCons x xs (listElimTyFun @a @p @xs xs pNil pCons)
--}
 listElimTyFun = listElimPoly @(:~>) @a @p @l
 
 listElimPoly :: forall (arr :: FunArrow) (a :: Type) (p :: ([a] -?> Type) arr) (l :: [a]).
@@ -120,13 +104,6 @@ natElim :: forall (p :: Nat -> Type) (n :: Nat).
         -> p 0
         -> (forall (k :: Nat). Sing k -> p k -> p (k :+ 1))
         -> p n
-{-
-natElim snat pZ pS =
-  case fromSing snat of
-    0        -> unsafeCoerce pZ
-    nPlusOne -> case toSing (pred nPlusOne) of
-                  SomeSing (sn :: Sing k) -> unsafeCoerce (pS sn (natElim @p @k sn pZ pS))
--}
 natElim = natElimPoly @(:->) @p @n
 
 natElimTyFun :: forall (p :: Nat ~> Type) (n :: Nat).
@@ -134,13 +111,6 @@ natElimTyFun :: forall (p :: Nat ~> Type) (n :: Nat).
              -> p @@ 0
              -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k :+ 1))
              -> p @@ n
-{-
-natElimTyFun snat pZ pS =
-  case fromSing snat of
-    0        -> unsafeCoerce pZ
-    nPlusOne -> case toSing (pred nPlusOne) of
-                  SomeSing (sn :: Sing k) -> unsafeCoerce (pS sn (natElimTyFun @p @k sn pZ pS))
--}
 natElimTyFun = natElimPoly @(:~>) @p @n
 
 natElimPoly :: forall (arr :: FunArrow) (p :: (Nat -?> Type) arr) (n :: Nat).
@@ -225,3 +195,27 @@ Why doesn't this typecheck?
 -}
 
 -- (%:~~:-?>)
+
+data Obj :: Type where
+  MkObj :: o -> Obj
+
+data instance Sing (z :: Obj) where
+  SMkObj :: forall (obj :: obiwan). Sing obj -> Sing (MkObj obj)
+
+elimObj :: forall (o :: Obj) (p :: Obj -> Type).
+           Sing o
+        -> (forall (obj :: Type) (x :: obj). Sing x -> p (MkObj x))
+        -> p o
+elimObj = elimObjPoly @(:->) @o @p
+
+elimObjTyFun :: forall (o :: Obj) (p :: Obj ~> Type).
+                Sing o
+             -> (forall (obj :: Type) (x :: obj). Sing x -> p @@ (MkObj x))
+             -> p @@ o
+elimObjTyFun = elimObjPoly @(:~>) @o @p
+
+elimObjPoly :: forall (arr :: FunArrow) (o :: Obj) (p :: (Obj -?> Type) arr).
+               Sing o
+            -> (forall (obj :: Type) (x :: obj). Sing x -> App Obj arr Type p (MkObj x))
+            -> App Obj arr Type p o
+elimObjPoly (SMkObj (x :: Sing (obj :: obiwan))) pMkObj = pMkObj @obiwan @obj x
