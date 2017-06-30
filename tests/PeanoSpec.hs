@@ -2,6 +2,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeInType #-}
@@ -19,7 +20,12 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = pure ()
+spec = parallel $ do
+  describe "replicateVec" $ do
+    it "works with empty lists" $
+      replicateVec SZ () `shouldBe` VNil
+    it "works with non-empty lists" $
+      replicateVec (SS SZ) () `shouldBe` VCons () VNil
 
 -----
 
@@ -53,4 +59,16 @@ elimPeanoPoly :: forall (arr :: FunArrow) (n :: Peano) (p :: (Peano -?> Type) ar
 elimPeanoPoly SZ pZ _ = pZ
 elimPeanoPoly (SS (sk :: Sing k)) pZ pS = pS sk (elimPeanoPoly @arr @k @p sk pZ pS)
 
+data Vec a (n :: Peano) where
+  VNil  :: Vec a Z
+  VCons :: a -> Vec a n -> Vec a (S n)
+deriving instance Eq a   => Eq (Vec a n)
+deriving instance Ord a  => Ord (Vec a n)
+deriving instance Show a => Show (Vec a n)
 
+replicateVec :: forall (e :: Type) (howMany :: Peano).
+                Sing howMany -> e -> Vec e howMany
+replicateVec s e = elimPeano @howMany @(Vec e) s VNil step
+  where
+    step :: forall (k :: Peano). Sing k -> Vec e k -> Vec e (S k)
+    step _ = VCons e
