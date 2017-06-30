@@ -25,8 +25,8 @@ spec = parallel $ do
     it "behaves like the one from Data.Type.Equality" $ do
       let boolEq :: Bool :~: Bool
           boolEq = Refl
-      sym SRefl boolEq             `shouldBe` DTE.sym boolEq
-      sym SRefl (sym SRefl boolEq) `shouldBe` DTE.sym (DTE.sym boolEq)
+      sym boolEq       `shouldBe` DTE.sym boolEq
+      sym (sym boolEq) `shouldBe` DTE.sym (DTE.sym boolEq)
 
 -----
 
@@ -89,6 +89,6 @@ data WhySymSym (a :: t) :: forall (y :: t). (a :~: y) ~> Type
 type instance Apply (WhySymSym z :: (z :~: y ~> Type)) x
   = WhySym z y x
 
-sym :: forall (t :: Type) (a :: t) (b :: t) (r :: a :~: b).
-       Sing r -> a :~: b -> b :~: a
-sym s _ = (~>:~:) @t @a @b @r @(WhySymSym a) s Refl
+sym :: forall (t :: Type) (a :: t) (b :: t).
+       a :~: b -> b :~: a
+sym eq = withSomeSing eq $ \(singEq :: Sing r) -> (~>:~:) @t @a @b @r @(WhySymSym a) singEq Refl
