@@ -63,6 +63,9 @@ instance SingKind (a :~~: b) where
   fromSing SHRefl = HRefl
   toSing HRefl    = SomeSing SHRefl
 
+instance SingI HRefl where
+  sing = SHRefl
+
 (->:~~:) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (r :: a :~~: b) (p :: forall (z :: Type) (y :: z). a :~~: y -> Type).
             Sing r
          -> p HRefl

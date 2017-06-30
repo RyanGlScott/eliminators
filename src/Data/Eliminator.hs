@@ -28,7 +28,9 @@ module Data.Eliminator (
   , elimList
   , elimMaybe
   , elimNat
+  , elimOrdering
   , elimTuple0
+
     -- ** Eliminators using '(~>)'
     -- $eliminators-TyFun
   , elimBoolTyFun
@@ -36,7 +38,9 @@ module Data.Eliminator (
   , elimListTyFun
   , elimMaybeTyFun
   , elimNatTyFun
+  , elimOrderingTyFun
   , elimTuple0TyFun
+
     -- ** Arrow-polymorphic eliminators (very experimental)
     -- $eliminators-Poly
   , FunArrow(..)
@@ -50,6 +54,7 @@ module Data.Eliminator (
   , elimListPoly
   , elimMaybePoly
   , elimNatPoly
+  , elimOrderingPoly
   , elimTuple0Poly
   ) where
 
@@ -103,6 +108,14 @@ elimNat :: forall (p :: Nat -> Type) (n :: Nat).
         -> p n
 elimNat = elimNatPoly @(:->)
 
+elimOrdering :: forall (p :: Ordering -> Type) (o :: Ordering).
+                Sing o
+             -> p LT
+             -> p EQ
+             -> p GT
+             -> p o
+elimOrdering = elimOrderingPoly @(:->)
+
 elimTuple0 :: forall (p :: () -> Type) (u :: ()).
               Sing u
            -> p '()
@@ -148,6 +161,14 @@ elimNatTyFun :: forall (p :: Nat ~> Type) (n :: Nat).
              -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k :+ 1))
              -> p @@ n
 elimNatTyFun = elimNatPoly @(:~>) @p
+
+elimOrderingTyFun :: forall (p :: Ordering ~> Type) (o :: Ordering).
+                     Sing o
+                  -> p @@ LT
+                  -> p @@ EQ
+                  -> p @@ GT
+                  -> p @@ o
+elimOrderingTyFun = elimOrderingPoly @(:~>) @p
 
 elimTuple0TyFun :: forall (p :: () ~> Type) (u :: ()).
                    Sing u
@@ -240,6 +261,16 @@ elimNatPoly snat pZ pS =
     0        -> unsafeCoerce pZ
     nPlusOne -> case toSing (pred nPlusOne) of
                   SomeSing (sn :: Sing k) -> unsafeCoerce (pS sn (elimNatPoly @arr @p @k sn pZ pS))
+
+elimOrderingPoly :: forall (arr :: FunArrow) (p :: (Ordering -?> Type) arr) (o :: Ordering).
+                    Sing o
+                 -> App Ordering arr Type p LT
+                 -> App Ordering arr Type p EQ
+                 -> App Ordering arr Type p GT
+                 -> App Ordering arr Type p o
+elimOrderingPoly SLT pLT _   _   = pLT
+elimOrderingPoly SEQ _   pEQ _   = pEQ
+elimOrderingPoly SGT _   _   pGT = pGT
 
 elimTuple0Poly :: forall (arr :: FunArrow) (p :: (() -?> Type) arr) (u :: ()).
                   FunApp arr
