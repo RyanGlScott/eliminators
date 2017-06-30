@@ -26,11 +26,13 @@ module Data.Eliminator (
     elimBool
   , elimList
   , elimNat
+  , elimTuple0
     -- ** Eliminators using '(~>)'
     -- $eliminators-TyFun
   , elimBoolTyFun
   , elimListTyFun
   , elimNatTyFun
+  , elimTuple0TyFun
     -- ** Arrow-polymorphic eliminators (very experimental)
     -- $eliminators-Poly
   , FunArrow(..)
@@ -42,6 +44,7 @@ module Data.Eliminator (
   , elimBoolPoly
   , elimListPoly
   , elimNatPoly
+  , elimTuple0Poly
   ) where
 
 import Data.Kind
@@ -80,6 +83,12 @@ elimNat :: forall (p :: Nat -> Type) (n :: Nat).
         -> p n
 elimNat = elimNatPoly @(:->) @p @n
 
+elimTuple0 :: forall (p :: () -> Type) (u :: ()).
+              Sing u
+           -> p '()
+           -> p u
+elimTuple0 = elimTuple0Poly @(:->) @p @u
+
 {- $eliminators-TyFun
 
 TODO
@@ -105,6 +114,12 @@ elimNatTyFun :: forall (p :: Nat ~> Type) (n :: Nat).
              -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k :+ 1))
              -> p @@ n
 elimNatTyFun = elimNatPoly @(:~>) @p @n
+
+elimTuple0TyFun :: forall (p :: () ~> Type) (u :: ()).
+                   Sing u
+                -> p @@ '()
+                -> p @@ u
+elimTuple0TyFun = elimTuple0Poly @(:~>) @p @u
 
 {- $eliminators-Poly
 
@@ -173,3 +188,10 @@ elimNatPoly snat pZ pS =
     0        -> unsafeCoerce pZ
     nPlusOne -> case toSing (pred nPlusOne) of
                   SomeSing (sn :: Sing k) -> unsafeCoerce (pS sn (elimNatPoly @arr @p @k sn pZ pS))
+
+elimTuple0Poly :: forall (arr :: FunArrow) (p :: (() -?> Type) arr) (u :: ()).
+                  FunApp arr
+               => Sing u
+               -> App () arr Type p '()
+               -> App () arr Type p u
+elimTuple0Poly STuple0 pTuple0 = pTuple0
