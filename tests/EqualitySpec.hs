@@ -6,12 +6,22 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Data.Eliminator.Equality where
+module EqualitySpec where
 
 import Data.Eliminator
 import Data.Kind
 import Data.Singletons
 import Data.Type.Equality ((:~:)(..), (:~~:)(..))
+
+import Test.Hspec
+
+main :: IO ()
+main = hspec spec
+
+spec :: Spec
+spec = pure ()
+
+-----
 
 data instance Sing (z :: a :~: b) where
   SRefl :: Sing Refl
