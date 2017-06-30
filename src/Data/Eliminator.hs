@@ -24,7 +24,6 @@ module Data.Eliminator where
 import Data.Kind
 import Data.Singletons.Prelude
 import Data.Singletons.TypeLits
-import Data.Type.Equality
 import Unsafe.Coerce
 
 data FunArrow = (:->) | (:~>)
@@ -158,44 +157,6 @@ soElimPoly :: forall (arr :: FunArrow) (what :: Bool) (s :: So what)
 soElimPoly SOh pOh = pOh
 -}
 
-data instance Sing (z :: a :~: b) where
-  SRefl :: Sing Refl
-
-(%:~:->) :: forall (k :: Type) (a :: k) (b :: k) (r :: a :~: b) (p :: forall (y :: k). a :~: y -> Type).
-            Sing r
-         -> p Refl
-         -> p r
-(%:~:->) SRefl pRefl = pRefl
-
-(%:~:~>) :: forall (k :: Type) (a :: k) (b :: k) (r :: a :~: b) (p :: forall (y :: k). a :~: y ~> Type).
-            Sing r
-         -> p @@ Refl
-         -> p @@ r
-(%:~:~>) SRefl pRefl = pRefl
-
--- (%:~:-?>)
-
-data instance Sing (z :: a :~~: b) where
-  SHRefl :: Sing HRefl
-
-(%:~~:->) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (r :: a :~~: b) (p :: forall (z :: Type) (y :: z). a :~~: y -> Type).
-             Sing r
-          -> p HRefl
-          -> p r
-(%:~~:->) SHRefl pHRefl = pHRefl
-
-{-
-Why doesn't this typecheck?
-
-(%:~~:~>) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (r :: a :~~: b) (p :: forall (z :: Type) (y :: z). a :~~: y ~> Type).
-             Sing r
-          -> p @@ HRefl
-          -> p @@ r
-(%:~~:~>) SHRefl pHRefl = pHRefl
--}
-
--- (%:~~:-?>)
-
 data Obj :: Type where
   MkObj :: o -> Obj
 
@@ -219,45 +180,3 @@ elimObjPoly :: forall (arr :: FunArrow) (o :: Obj) (p :: (Obj -?> Type) arr).
             -> (forall (obj :: Type) (x :: obj). Sing x -> App Obj arr Type p (MkObj x))
             -> App Obj arr Type p o
 elimObjPoly (SMkObj (x :: Sing (obj :: obiwan))) pMkObj = pMkObj @obiwan @obj x
-
------
-
-data WeirdList :: Type -> Type where
-  WeirdNil  :: WeirdList a
-  WeirdCons :: a -> WeirdList (WeirdList a) -> WeirdList a
-
-data instance Sing (z :: WeirdList a) where
-  SWeirdNil  :: Sing WeirdNil
-  SWeirdCons :: Sing w -> Sing wws -> Sing (WeirdCons w wws)
-
-elimWeirdList :: forall (a :: Type) (wl :: WeirdList a)
-                        (p :: forall (x :: Type). WeirdList x -> Type).
-                 Sing wl
-              -> (forall (y :: Type). p (WeirdNil :: WeirdList y))
-              -> (forall (z :: Type) (x :: z) (xs :: WeirdList (WeirdList z)).
-                    Sing x -> Sing xs -> p xs -> p (WeirdCons x xs))
-              -> p wl
-elimWeirdList SWeirdNil pWeirdNil _ = pWeirdNil
-elimWeirdList (SWeirdCons (x :: Sing (x :: z))
-                          (xs :: Sing (xs :: WeirdList (WeirdList z))))
-              pWeirdNil pWeirdCons
-  = pWeirdCons @z @x @xs x xs
-      (elimWeirdList @(WeirdList z) @xs @p xs pWeirdNil pWeirdCons)
-
-{-
-elimWeirdListTyFun :: forall (a :: Type) (wl :: WeirdList a)
-                             (p :: forall (x :: Type). WeirdList x ~> Type).
-                      Sing wl
-                   -> (forall (y :: Type). p @@ (WeirdNil :: WeirdList y))
-                   -> (forall (z :: Type) (x :: z) (xs :: WeirdList (WeirdList z)).
-                         Sing x -> Sing xs -> p @@ xs -> p @@ (WeirdCons x xs))
-                   -> p @@ wl
-elimWeirdListTyFun SWeirdNil pWeirdNil _ = pWeirdNil
-elimWeirdListTyFun (SWeirdCons (x :: Sing (x :: z))
-                          (xs :: Sing (xs :: WeirdList (WeirdList z))))
-              pWeirdNil pWeirdCons
-  = pWeirdCons @z @x @xs x xs
-      (elimWeirdListTyFun @(WeirdList z) @xs @p xs pWeirdNil pWeirdCons)
--}
-
--- elimWeirdListPoly

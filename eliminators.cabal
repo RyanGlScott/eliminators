@@ -22,6 +22,7 @@ source-repository head
 
 library
   exposed-modules:     Data.Eliminator
+                       Data.Eliminator.Equality
   build-depends:       base       >= 4.10 && < 4.11
                      , singletons >= 2.3
   hs-source-dirs:      src
