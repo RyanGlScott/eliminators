@@ -31,6 +31,12 @@ module Data.Eliminator (
   , elimNonEmpty
   , elimOrdering
   , elimTuple0
+  , elimTuple2
+  , elimTuple3
+  , elimTuple4
+  , elimTuple5
+  , elimTuple6
+  , elimTuple7
 
     -- ** Eliminators using '(~>)'
     -- $eliminators-TyFun
@@ -42,6 +48,12 @@ module Data.Eliminator (
   , elimNonEmptyTyFun
   , elimOrderingTyFun
   , elimTuple0TyFun
+  , elimTuple2TyFun
+  , elimTuple3TyFun
+  , elimTuple4TyFun
+  , elimTuple5TyFun
+  , elimTuple6TyFun
+  , elimTuple7TyFun
 
     -- ** Arrow-polymorphic eliminators (very experimental)
     -- $eliminators-Poly
@@ -59,6 +71,12 @@ module Data.Eliminator (
   , elimNatPoly
   , elimOrderingPoly
   , elimTuple0Poly
+  , elimTuple2Poly
+  , elimTuple3Poly
+  , elimTuple4Poly
+  , elimTuple5Poly
+  , elimTuple6Poly
+  , elimTuple7Poly
   ) where
 
 import Data.Kind (Type)
@@ -133,6 +151,60 @@ elimTuple0 :: forall (p :: () -> Type) (u :: ()).
            -> p u
 elimTuple0 = elimTuple0Poly @(:->)
 
+elimTuple2 :: forall (a :: Type) (b :: Type)
+                     (p :: (a, b) -> Type) (t :: (a, b)).
+              Sing t
+           -> (forall (aa :: a) (bb :: b).
+                      Sing aa -> Sing bb
+                   -> p '(aa, bb))
+           -> p t
+elimTuple2 = elimTuple2Poly @(:->)
+
+elimTuple3 :: forall (a :: Type) (b :: Type) (c :: Type)
+                     (p :: (a, b, c) -> Type) (t :: (a, b, c)).
+              Sing t
+           -> (forall (aa :: a) (bb :: b) (cc :: c).
+                      Sing aa -> Sing bb -> Sing cc
+                   -> p '(aa, bb, cc))
+           -> p t
+elimTuple3 = elimTuple3Poly @(:->)
+
+elimTuple4 :: forall (a :: Type) (b :: Type) (c :: Type) (d :: Type)
+                     (p :: (a, b, c, d) -> Type) (t :: (a, b, c, d)).
+              Sing t
+           -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d).
+                      Sing aa -> Sing bb -> Sing cc -> Sing dd
+                   -> p '(aa, bb, cc, dd))
+           -> p t
+elimTuple4 = elimTuple4Poly @(:->)
+
+elimTuple5 :: forall (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type)
+                     (p :: (a, b, c, d, e) -> Type) (t :: (a, b, c, d, e)).
+              Sing t
+           -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e).
+                      Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee
+                   -> p '(aa, bb, cc, dd, ee))
+           -> p t
+elimTuple5 = elimTuple5Poly @(:->)
+
+elimTuple6 :: forall (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type) (f :: Type)
+                     (p :: (a, b, c, d, e, f) -> Type) (t :: (a, b, c, d, e, f)).
+              Sing t
+           -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e) (ff :: f).
+                      Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee -> Sing ff
+                   -> p '(aa, bb, cc, dd, ee, ff))
+           -> p t
+elimTuple6 = elimTuple6Poly @(:->)
+
+elimTuple7 :: forall (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type) (f :: Type) (g :: Type)
+                     (p :: (a, b, c, d, e, f, g) -> Type) (t :: (a, b, c, d, e, f, g)).
+              Sing t
+           -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e) (ff :: f) (gg :: g).
+                      Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee -> Sing ff -> Sing gg
+                   -> p '(aa, bb, cc, dd, ee, ff, gg))
+           -> p t
+elimTuple7 = elimTuple7Poly @(:->)
+
 {- $eliminators-TyFun
 
 TODO
@@ -192,6 +264,60 @@ elimTuple0TyFun :: forall (p :: () ~> Type) (u :: ()).
                 -> p @@ '()
                 -> p @@ u
 elimTuple0TyFun = elimTuple0Poly @(:~>) @p
+
+elimTuple2TyFun :: forall (a :: Type) (b :: Type)
+                          (p :: (a, b) ~> Type) (t :: (a, b)).
+                   Sing t
+                -> (forall (aa :: a) (bb :: b).
+                           Sing aa -> Sing bb
+                        -> p @@ '(aa, bb))
+                -> p @@ t
+elimTuple2TyFun = elimTuple2Poly @(:~>) @_ @_ @p
+
+elimTuple3TyFun :: forall (a :: Type) (b :: Type) (c :: Type)
+                          (p :: (a, b, c) ~> Type) (t :: (a, b, c)).
+                   Sing t
+                -> (forall (aa :: a) (bb :: b) (cc :: c).
+                           Sing aa -> Sing bb -> Sing cc
+                        -> p @@ '(aa, bb, cc))
+                -> p @@ t
+elimTuple3TyFun = elimTuple3Poly @(:~>) @_ @_ @_ @p
+
+elimTuple4TyFun :: forall (a :: Type) (b :: Type) (c :: Type) (d :: Type)
+                          (p :: (a, b, c, d) ~> Type) (t :: (a, b, c, d)).
+                   Sing t
+                -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d).
+                           Sing aa -> Sing bb -> Sing cc -> Sing dd
+                        -> p @@ '(aa, bb, cc, dd))
+                -> p @@ t
+elimTuple4TyFun = elimTuple4Poly @(:~>) @_ @_ @_ @_ @p
+
+elimTuple5TyFun :: forall (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type)
+                          (p :: (a, b, c, d, e) ~> Type) (t :: (a, b, c, d, e)).
+                   Sing t
+                -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e).
+                           Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee
+                        -> p @@ '(aa, bb, cc, dd, ee))
+                -> p @@ t
+elimTuple5TyFun = elimTuple5Poly @(:~>) @_ @_ @_ @_ @_ @p
+
+elimTuple6TyFun :: forall (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type) (f :: Type)
+                          (p :: (a, b, c, d, e, f) ~> Type) (t :: (a, b, c, d, e, f)).
+                   Sing t
+                -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e) (ff :: f).
+                           Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee -> Sing ff
+                        -> p @@ '(aa, bb, cc, dd, ee, ff))
+                -> p @@ t
+elimTuple6TyFun = elimTuple6Poly @(:~>) @_ @_ @_ @_ @_ @_ @p
+
+elimTuple7TyFun :: forall (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type) (f :: Type) (g :: Type)
+                          (p :: (a, b, c, d, e, f, g) ~> Type) (t :: (a, b, c, d, e, f, g)).
+                   Sing t
+                -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e) (ff :: f) (gg :: g).
+                           Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee -> Sing ff -> Sing gg
+                        -> p @@ '(aa, bb, cc, dd, ee, ff, gg))
+                -> p @@ t
+elimTuple7TyFun = elimTuple7Poly @(:~>) @_ @_ @_ @_ @_ @_ @_ @p
 
 {- $eliminators-Poly
 
@@ -302,3 +428,63 @@ elimTuple0Poly :: forall (arr :: FunArrow) (p :: (() -?> Type) arr) (u :: ()).
                -> App () arr Type p '()
                -> App () arr Type p u
 elimTuple0Poly STuple0 pTuple0 = pTuple0
+
+elimTuple2Poly :: forall (arr :: FunArrow) (a :: Type) (b :: Type)
+                         (p :: ((a, b) -?> Type) arr) (t :: (a, b)).
+                  FunApp arr
+               => Sing t
+               -> (forall (aa :: a) (bb :: b).
+                          Sing aa -> Sing bb
+                       -> App (a, b) arr Type p '(aa, bb))
+               -> App (a, b) arr Type p t
+elimTuple2Poly (STuple2 sa sb) pTuple2 = pTuple2 sa sb
+
+elimTuple3Poly :: forall (arr :: FunArrow) (a :: Type) (b :: Type) (c :: Type)
+                         (p :: ((a, b, c) -?> Type) arr) (t :: (a, b, c)).
+                  FunApp arr
+               => Sing t
+               -> (forall (aa :: a) (bb :: b) (cc :: c).
+                          Sing aa -> Sing bb -> Sing cc
+                       -> App (a, b, c) arr Type p '(aa, bb, cc))
+               -> App (a, b, c) arr Type p t
+elimTuple3Poly (STuple3 sa sb sc) pTuple3 = pTuple3 sa sb sc
+
+elimTuple4Poly :: forall (arr :: FunArrow) (a :: Type) (b :: Type) (c :: Type) (d :: Type)
+                         (p :: ((a, b, c, d) -?> Type) arr) (t :: (a, b, c, d)).
+                  FunApp arr
+               => Sing t
+               -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d).
+                          Sing aa -> Sing bb -> Sing cc -> Sing dd
+                       -> App (a, b, c, d) arr Type p '(aa, bb, cc, dd))
+               -> App (a, b, c, d) arr Type p t
+elimTuple4Poly (STuple4 sa sb sc sd) pTuple4 = pTuple4 sa sb sc sd
+
+elimTuple5Poly :: forall (arr :: FunArrow) (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type)
+                         (p :: ((a, b, c, d, e) -?> Type) arr) (t :: (a, b, c, d, e)).
+                  FunApp arr
+               => Sing t
+               -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e).
+                          Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee
+                       -> App (a, b, c, d, e) arr Type p '(aa, bb, cc, dd, ee))
+               -> App (a, b, c, d, e) arr Type p t
+elimTuple5Poly (STuple5 sa sb sc sd se) pTuple5 = pTuple5 sa sb sc sd se
+
+elimTuple6Poly :: forall (arr :: FunArrow) (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type) (f :: Type)
+                         (p :: ((a, b, c, d, e, f) -?> Type) arr) (t :: (a, b, c, d, e, f)).
+                  FunApp arr
+               => Sing t
+               -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e) (ff :: f).
+                          Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee -> Sing ff
+                       -> App (a, b, c, d, e, f) arr Type p '(aa, bb, cc, dd, ee, ff))
+               -> App (a, b, c, d, e, f) arr Type p t
+elimTuple6Poly (STuple6 sa sb sc sd se sf) pTuple6 = pTuple6 sa sb sc sd se sf
+
+elimTuple7Poly :: forall (arr :: FunArrow) (a :: Type) (b :: Type) (c :: Type) (d :: Type) (e :: Type) (f :: Type) (g :: Type)
+                         (p :: ((a, b, c, d, e, f, g) -?> Type) arr) (t :: (a, b, c, d, e, f, g)).
+                  FunApp arr
+               => Sing t
+               -> (forall (aa :: a) (bb :: b) (cc :: c) (dd :: d) (ee :: e) (ff :: f) (gg :: g).
+                          Sing aa -> Sing bb -> Sing cc -> Sing dd -> Sing ee -> Sing ff -> Sing gg
+                       -> App (a, b, c, d, e, f, g) arr Type p '(aa, bb, cc, dd, ee, ff, gg))
+               -> App (a, b, c, d, e, f, g) arr Type p t
+elimTuple7Poly (STuple7 sa sb sc sd se sf sg) pTuple7 = pTuple7 sa sb sc sd se sf sg
