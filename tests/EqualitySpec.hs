@@ -9,17 +9,24 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module EqualitySpec where
 
-import Data.Kind
-import Data.Singletons
-import Data.Type.Equality ((:~:)(..), (:~~:)(..))
+import           Data.Kind
+import           Data.Singletons
+import qualified Data.Type.Equality as DTE
+import           Data.Type.Equality ((:~:)(..), (:~~:)(..))
 
-import Test.Hspec
+import           Test.Hspec
 
 main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = pure ()
+spec = parallel $ do
+  describe "sym" $
+    it "behaves like the one from Data.Type.Equality" $ do
+      let boolEq :: Bool :~: Bool
+          boolEq = Refl
+      sym SRefl boolEq             `shouldBe` DTE.sym boolEq
+      sym SRefl (sym SRefl boolEq) `shouldBe` DTE.sym (DTE.sym boolEq)
 
 -----
 
@@ -76,14 +83,12 @@ Why doesn't this typecheck?
 
 -----
 
-{-
 type WhySym (a :: t) (y :: t) (e :: a :~: y) = y :~: a
 data WhySymSym (a :: t) :: forall (y :: t). (a :~: y) ~> Type
 
-type instance Apply (WhySymSym (z :: t) :: ((z :: t) :~: (y :: t) ~> Type)) x
+type instance Apply (WhySymSym z :: (z :~: y ~> Type)) x
   = WhySym z y x
 
 sym :: forall (t :: Type) (a :: t) (b :: t) (r :: a :~: b).
        Sing r -> a :~: b -> b :~: a
-sym s eq = (->:~:) @t @a @b @r @(WhySymSym a) s Refl eq
--}
+sym s _ = (~>:~:) @t @a @b @r @(WhySymSym a) s Refl
