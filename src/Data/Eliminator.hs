@@ -19,22 +19,113 @@ Portability: GHC
 
 Dependently typed elimination functions using @singletons@.
 -}
-module Data.Eliminator where
+module Data.Eliminator (
+    -- * Eliminator functions
+    -- ** Eliminators using '(->)'
+    -- $eliminators
+    elimBool
+  , elimList
+  , elimNat
+    -- ** Eliminators using '(~>)'
+    -- $eliminators-TyFun
+  , elimBoolTyFun
+  , elimListTyFun
+  , elimNatTyFun
+    -- ** Arrow-polymorphic eliminators (very experimental)
+    -- $eliminators-Poly
+  , FunArrow(..)
+  , FunType(..)
+  , type (-?>)
+  , AppType(..)
+  , FunApp
+
+  , elimBoolPoly
+  , elimListPoly
+  , elimNatPoly
+  ) where
 
 import Data.Kind
 import Data.Singletons.Prelude
 import Data.Singletons.TypeLits
 import Unsafe.Coerce
 
+{- $eliminators
+
+These eliminators are defined with propositions of kind @<Datatype> -> 'Type'@
+(that is, using the '(->)' kind). As a result, these eliminators' type signatures
+are the most readable in this library, and most closely resemble eliminator functions
+in other dependently typed languages.
+
+TODO
+-}
+
+elimBool :: forall (p :: Bool -> Type) (b :: Bool).
+            Sing b
+         -> p False
+         -> p True
+         -> p b
+elimBool = elimBoolPoly @(:->) @p @b
+
+elimList :: forall (a :: Type) (p :: [a] -> Type) (l :: [a]).
+            Sing l
+         -> p '[]
+         -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p xs -> p (x:xs))
+         -> p l
+elimList = elimListPoly @(:->) @a @p @l
+
+elimNat :: forall (p :: Nat -> Type) (n :: Nat).
+           Sing n
+        -> p 0
+        -> (forall (k :: Nat). Sing k -> p k -> p (k :+ 1))
+        -> p n
+elimNat = elimNatPoly @(:->) @p @n
+
+{- $eliminators-TyFun
+
+TODO
+-}
+
+elimBoolTyFun :: forall (p :: Bool ~> Type) (b :: Bool).
+                 Sing b
+              -> p @@ False
+              -> p @@ True
+              -> p @@ b
+elimBoolTyFun = elimBoolPoly @(:~>) @p @b
+
+elimListTyFun :: forall (a :: Type) (p :: [a] ~> Type) (l :: [a]).
+                 Sing l
+              -> p @@ '[]
+              -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p @@ xs -> p @@ (x:xs))
+              -> p @@ l
+elimListTyFun = elimListPoly @(:~>) @a @p @l
+
+elimNatTyFun :: forall (p :: Nat ~> Type) (n :: Nat).
+                Sing n
+             -> p @@ 0
+             -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k :+ 1))
+             -> p @@ n
+elimNatTyFun = elimNatPoly @(:~>) @p @n
+
+{- $eliminators-Poly
+
+TODO
+-}
+
+-- TODO
 data FunArrow = (:->) | (:~>)
 
+-- TODO
 class FunType (arr :: FunArrow) where
+  -- | TODO
   type Fun (k1 :: Type) arr (k2 :: Type) :: Type
 
+-- TODO
 class FunType arr => AppType (arr :: FunArrow) where
+  -- TODO
   -- Can't be defined in the same class as Fun due to staging restrictions
   type App k1 arr k2 (f :: Fun k1 arr k2) (x :: k1) :: k2
 
+-- TODO
 type FunApp arr = (FunType arr, AppType arr)
 
 instance FunType (:->) where
@@ -49,22 +140,9 @@ instance FunType (:~>) where
 instance AppType (:~>) where
   type App k1 (:~>) k2 (f :: k1 ~> k2) x = f @@ x
 
+-- TODO
 infixr 0 -?>
 type (-?>) (k1 :: Type) (k2 :: Type) (arr :: FunArrow) = Fun k1 arr k2
-
-elimBool :: forall (p :: Bool -> Type) (b :: Bool).
-            Sing b
-         -> p False
-         -> p True
-         -> p b
-elimBool = elimBoolPoly @(:->) @p @b
-
-elimBoolTyFun :: forall (p :: Bool ~> Type) (b :: Bool).
-                 Sing b
-              -> p @@ False
-              -> p @@ True
-              -> p @@ b
-elimBoolTyFun = elimBoolPoly @(:~>) @p @b
 
 elimBoolPoly :: forall (arr :: FunArrow) (p :: (Bool -?> Type) arr) (b :: Bool).
                 FunApp arr
@@ -75,20 +153,6 @@ elimBoolPoly :: forall (arr :: FunArrow) (p :: (Bool -?> Type) arr) (b :: Bool).
 elimBoolPoly SFalse pF _  = pF
 elimBoolPoly STrue  _  pT = pT
 
-elimList :: forall (a :: Type) (p :: [a] -> Type) (l :: [a]).
-            Sing l
-         -> p '[]
-         -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p xs -> p (x:xs))
-         -> p l
-elimList = elimListPoly @(:->) @a @p @l
-
-elimListTyFun :: forall (a :: Type) (p :: [a] ~> Type) (l :: [a]).
-                 Sing l
-              -> p @@ '[]
-              -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p @@ xs -> p @@ (x:xs))
-              -> p @@ l
-elimListTyFun = elimListPoly @(:~>) @a @p @l
-
 elimListPoly :: forall (arr :: FunArrow) (a :: Type) (p :: ([a] -?> Type) arr) (l :: [a]).
                 FunApp arr
              => Sing l
@@ -97,20 +161,6 @@ elimListPoly :: forall (arr :: FunArrow) (a :: Type) (p :: ([a] -?> Type) arr) (
              -> App [a] arr Type p l
 elimListPoly SNil                      pNil _     = pNil
 elimListPoly (SCons x (xs :: Sing xs)) pNil pCons = pCons x xs (elimListPoly @arr @a @p @xs xs pNil pCons)
-
-elimNat :: forall (p :: Nat -> Type) (n :: Nat).
-           Sing n
-        -> p 0
-        -> (forall (k :: Nat). Sing k -> p k -> p (k :+ 1))
-        -> p n
-elimNat = elimNatPoly @(:->) @p @n
-
-elimNatTyFun :: forall (p :: Nat ~> Type) (n :: Nat).
-                Sing n
-             -> p @@ 0
-             -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k :+ 1))
-             -> p @@ n
-elimNatTyFun = elimNatPoly @(:~>) @p @n
 
 elimNatPoly :: forall (arr :: FunArrow) (p :: (Nat -?> Type) arr) (n :: Nat).
                FunApp arr
