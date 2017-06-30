@@ -29,26 +29,26 @@ data So :: Bool -> Type where
 data instance Sing (z :: So what) where
   SOh :: Sing Oh
 
-soElim :: forall (what :: Bool) (s :: So what) (p :: forall (long_sucker :: Bool). So long_sucker -> Type).
+elimSo :: forall (what :: Bool) (s :: So what) (p :: forall (long_sucker :: Bool). So long_sucker -> Type).
           Sing s
        -> p Oh
        -> p s
-soElim SOh pOh = pOh
+elimSo SOh pOh = pOh
 
-soElimTyFun :: forall (what :: Bool) (s :: So what) (p :: forall (long_sucker :: Bool). So long_sucker ~> Type).
+elimSoTyFun :: forall (what :: Bool) (s :: So what) (p :: forall (long_sucker :: Bool). So long_sucker ~> Type).
                Sing s
             -> p @@ Oh
             -> p @@ s
-soElimTyFun SOh pOh = pOh
+elimSoTyFun SOh pOh = pOh
 
 {-
 I don't know how to make this kind-check :(
-soElimPoly :: forall (arr :: FunArrow) (what :: Bool) (s :: So what)
+elimSoPoly :: forall (arr :: FunArrow) (what :: Bool) (s :: So what)
                      (p :: forall (long_sucker :: Bool). (So long_sucker -?> Type) arr).
               Sing s
            -> App (So True) arr Type p Oh
            -> App (So what) arr Type p s
-soElimPoly SOh pOh = pOh
+elimSoPoly SOh pOh = pOh
 -}
 
 data Obj :: Type where
