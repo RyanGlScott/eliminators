@@ -93,7 +93,7 @@ These eliminators are defined with propositions of kind @<Datatype> -> 'Type'@
 are the most readable in this library, and most closely resemble eliminator functions
 in other dependently typed languages.
 
-TODO
+TODO: Example
 -}
 
 elimBool :: forall (p :: Bool -> Type) (b :: Bool).
@@ -207,7 +207,12 @@ elimTuple7 = elimTuple7Poly @(:->)
 
 {- $eliminators-TyFun
 
-TODO
+These eliminators are defined with propositions of kind @<Datatype> ~> 'Type'@
+(that is, using the '(~>)' kind). These eliminators are designed for
+defunctionalized (i.e., \"partially applied\") type families as predicates,
+and as a result, the predicates must be applied manually with '(@@)'.
+
+TODO: Example
 -}
 
 elimBoolTyFun :: forall (p :: Bool ~> Type) (b :: Bool).
@@ -321,24 +326,36 @@ elimTuple7TyFun = elimTuple7Poly @(:~>) @_ @_ @_ @_ @_ @_ @_ @p
 
 {- $eliminators-Poly
 
-TODO
+Eliminators using '(->)' and eliminators using '(~>)' end up having very similar
+implementations - so similar, in fact, that they can be generalized to be polymorphic
+over the arrow kind used (as well as the application operator). The 'FunType' and
+'AppType' classes capture these notions of abstraction and application, respectively.
+
+Not all eliminators are known to work under this generalized scheme yet (for
+instance, eliminators for GADTs).
+
+Chances are, you won't want to use these eliminators directly, since their type
+signatures are pretty horrific and don't always play well with type inference.
+However, they are provided for the sake of completeness.
 -}
 
--- TODO
-data FunArrow = (:->) | (:~>)
+-- | An enumeration which represents the possible choices of arrow kind for
+-- eliminator functions.
+data FunArrow = (:->) -- ^ '(->)'
+              | (:~>) -- ^ '(~>)'
 
--- TODO
+-- | Things which have arrow kinds.
 class FunType (arr :: FunArrow) where
-  -- | TODO
+  -- | An arrow kind.
   type Fun (k1 :: Type) arr (k2 :: Type) :: Type
 
--- TODO
+-- | Things which can be applied.
 class FunType arr => AppType (arr :: FunArrow) where
-  -- TODO
-  -- Can't be defined in the same class as Fun due to staging restrictions
+  -- | An application of a 'Fun' to an argument.
+  -- Note that this can't be defined in the same class as Fun due to GHC restrictions.
   type App k1 arr k2 (f :: Fun k1 arr k2) (x :: k1) :: k2
 
--- TODO
+-- | Something which has both a 'Fun' and an 'App'.
 type FunApp arr = (FunType arr, AppType arr)
 
 instance FunType (:->) where
@@ -353,9 +370,12 @@ instance FunType (:~>) where
 instance AppType (:~>) where
   type App k1 (:~>) k2 (f :: k1 ~> k2) x = f @@ x
 
--- TODO
+-- | An infix synonym for 'Fun'.
 infixr 0 -?>
 type (-?>) (k1 :: Type) (k2 :: Type) (arr :: FunArrow) = Fun k1 arr k2
+
+-- Note: it would be nice to have an infix synonym for 'App' as well, but
+-- the order in which the type variable dependencies occur makes this awkward to achieve.
 
 elimBoolPoly :: forall (arr :: FunArrow) (p :: (Bool -?> Type) arr) (b :: Bool).
                 FunApp arr
