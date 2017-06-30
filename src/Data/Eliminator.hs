@@ -26,6 +26,7 @@ module Data.Eliminator (
     elimBool
   , elimEither
   , elimList
+  , elimMaybe
   , elimNat
   , elimTuple0
     -- ** Eliminators using '(~>)'
@@ -33,6 +34,7 @@ module Data.Eliminator (
   , elimBoolTyFun
   , elimEitherTyFun
   , elimListTyFun
+  , elimMaybeTyFun
   , elimNatTyFun
   , elimTuple0TyFun
     -- ** Arrow-polymorphic eliminators (very experimental)
@@ -46,6 +48,7 @@ module Data.Eliminator (
   , elimBoolPoly
   , elimEitherPoly
   , elimListPoly
+  , elimMaybePoly
   , elimNatPoly
   , elimTuple0Poly
   ) where
@@ -70,34 +73,41 @@ elimBool :: forall (p :: Bool -> Type) (b :: Bool).
          -> p False
          -> p True
          -> p b
-elimBool = elimBoolPoly @(:->) @p @b
+elimBool = elimBoolPoly @(:->)
 
 elimEither :: forall (a :: Type) (b :: Type) (p :: Either a b -> Type) (e :: Either a b).
               Sing e
            -> (forall (l :: a). Sing l -> p (Left  l))
            -> (forall (r :: b). Sing r -> p (Right r))
            -> p e
-elimEither = elimEitherPoly @(:->) @a @b @p @e
+elimEither = elimEitherPoly @(:->)
 
 elimList :: forall (a :: Type) (p :: [a] -> Type) (l :: [a]).
             Sing l
          -> p '[]
          -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p xs -> p (x:xs))
          -> p l
-elimList = elimListPoly @(:->) @a @p @l
+elimList = elimListPoly @(:->)
+
+elimMaybe :: forall (a :: Type) (p :: Maybe a -> Type) (m :: Maybe a).
+             Sing m
+          -> p Nothing
+          -> (forall (x :: a). Sing x -> p (Just x))
+          -> p m
+elimMaybe = elimMaybePoly @(:->)
 
 elimNat :: forall (p :: Nat -> Type) (n :: Nat).
            Sing n
         -> p 0
         -> (forall (k :: Nat). Sing k -> p k -> p (k :+ 1))
         -> p n
-elimNat = elimNatPoly @(:->) @p @n
+elimNat = elimNatPoly @(:->)
 
 elimTuple0 :: forall (p :: () -> Type) (u :: ()).
               Sing u
            -> p '()
            -> p u
-elimTuple0 = elimTuple0Poly @(:->) @p @u
+elimTuple0 = elimTuple0Poly @(:->)
 
 {- $eliminators-TyFun
 
@@ -109,34 +119,41 @@ elimBoolTyFun :: forall (p :: Bool ~> Type) (b :: Bool).
               -> p @@ False
               -> p @@ True
               -> p @@ b
-elimBoolTyFun = elimBoolPoly @(:~>) @p @b
+elimBoolTyFun = elimBoolPoly @(:~>) @p
 
 elimEitherTyFun :: forall (a :: Type) (b :: Type) (p :: Either a b ~> Type) (e :: Either a b).
                    Sing e
                 -> (forall (l :: a). Sing l -> p @@ (Left  l))
                 -> (forall (r :: b). Sing r -> p @@ (Right r))
                 -> p @@ e
-elimEitherTyFun = elimEitherPoly @(:~>) @a @b @p @e
+elimEitherTyFun = elimEitherPoly @(:~>) @_ @_ @p
 
 elimListTyFun :: forall (a :: Type) (p :: [a] ~> Type) (l :: [a]).
                  Sing l
               -> p @@ '[]
               -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p @@ xs -> p @@ (x:xs))
               -> p @@ l
-elimListTyFun = elimListPoly @(:~>) @a @p @l
+elimListTyFun = elimListPoly @(:~>) @_ @p
+
+elimMaybeTyFun :: forall (a :: Type) (p :: Maybe a ~> Type) (m :: Maybe a).
+                  Sing m
+               -> p @@ Nothing
+               -> (forall (x :: a). Sing x -> p @@ (Just x))
+               -> p @@ m
+elimMaybeTyFun = elimMaybePoly @(:~>) @_ @p
 
 elimNatTyFun :: forall (p :: Nat ~> Type) (n :: Nat).
                 Sing n
              -> p @@ 0
              -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k :+ 1))
              -> p @@ n
-elimNatTyFun = elimNatPoly @(:~>) @p @n
+elimNatTyFun = elimNatPoly @(:~>) @p
 
 elimTuple0TyFun :: forall (p :: () ~> Type) (u :: ()).
                    Sing u
                 -> p @@ '()
                 -> p @@ u
-elimTuple0TyFun = elimTuple0Poly @(:~>) @p @u
+elimTuple0TyFun = elimTuple0Poly @(:~>) @p
 
 {- $eliminators-Poly
 
@@ -202,6 +219,15 @@ elimListPoly :: forall (arr :: FunArrow) (a :: Type) (p :: ([a] -?> Type) arr) (
              -> App [a] arr Type p l
 elimListPoly SNil                      pNil _     = pNil
 elimListPoly (SCons x (xs :: Sing xs)) pNil pCons = pCons x xs (elimListPoly @arr @a @p @xs xs pNil pCons)
+
+elimMaybePoly :: forall (arr :: FunArrow) (a :: Type) (p :: (Maybe a -?> Type) arr) (m :: Maybe a).
+                 FunApp arr
+              => Sing m
+              -> App (Maybe a) arr Type p Nothing
+              -> (forall (x :: a). Sing x -> App (Maybe a) arr Type p (Just x))
+              -> App (Maybe a) arr Type p m
+elimMaybePoly SNothing pNothing _ = pNothing
+elimMaybePoly (SJust sx) _ pJust  = pJust sx
 
 elimNatPoly :: forall (arr :: FunArrow) (p :: (Nat -?> Type) arr) (n :: Nat).
                FunApp arr
