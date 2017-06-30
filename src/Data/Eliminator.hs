@@ -28,6 +28,7 @@ module Data.Eliminator (
   , elimList
   , elimMaybe
   , elimNat
+  , elimNonEmpty
   , elimOrdering
   , elimTuple0
 
@@ -38,6 +39,7 @@ module Data.Eliminator (
   , elimListTyFun
   , elimMaybeTyFun
   , elimNatTyFun
+  , elimNonEmptyTyFun
   , elimOrderingTyFun
   , elimTuple0TyFun
 
@@ -53,15 +55,18 @@ module Data.Eliminator (
   , elimEitherPoly
   , elimListPoly
   , elimMaybePoly
+  , elimNonEmptyPoly
   , elimNatPoly
   , elimOrderingPoly
   , elimTuple0Poly
   ) where
 
-import Data.Kind
+import Data.Kind (Type)
+import Data.List.NonEmpty (NonEmpty(..))
 import Data.Singletons.Prelude
+import Data.Singletons.Prelude.List.NonEmpty (Sing(..))
 import Data.Singletons.TypeLits
-import Unsafe.Coerce
+import Unsafe.Coerce (unsafeCoerce)
 
 {- $eliminators
 
@@ -107,6 +112,12 @@ elimNat :: forall (p :: Nat -> Type) (n :: Nat).
         -> (forall (k :: Nat). Sing k -> p k -> p (k :+ 1))
         -> p n
 elimNat = elimNatPoly @(:->)
+
+elimNonEmpty :: forall (a :: Type) (p :: NonEmpty a -> Type) (n :: NonEmpty a).
+                Sing n
+             -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p (x :| xs))
+             -> p n
+elimNonEmpty = elimNonEmptyPoly @(:->)
 
 elimOrdering :: forall (p :: Ordering -> Type) (o :: Ordering).
                 Sing o
@@ -161,6 +172,12 @@ elimNatTyFun :: forall (p :: Nat ~> Type) (n :: Nat).
              -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k :+ 1))
              -> p @@ n
 elimNatTyFun = elimNatPoly @(:~>) @p
+
+elimNonEmptyTyFun :: forall (a :: Type) (p :: NonEmpty a ~> Type) (n :: NonEmpty a).
+                     Sing n
+                  -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> p @@ (x :| xs))
+                  -> p @@ n
+elimNonEmptyTyFun = elimNonEmptyPoly @(:~>) @_ @p
 
 elimOrderingTyFun :: forall (p :: Ordering ~> Type) (o :: Ordering).
                      Sing o
@@ -261,6 +278,13 @@ elimNatPoly snat pZ pS =
     0        -> unsafeCoerce pZ
     nPlusOne -> case toSing (pred nPlusOne) of
                   SomeSing (sn :: Sing k) -> unsafeCoerce (pS sn (elimNatPoly @arr @p @k sn pZ pS))
+
+elimNonEmptyPoly :: forall (arr :: FunArrow) (a :: Type) (p :: (NonEmpty a -?> Type) arr) (n :: NonEmpty a).
+                    FunApp arr
+                 => Sing n
+                 -> (forall (x :: a) (xs :: [a]). Sing x -> Sing xs -> App (NonEmpty a) arr Type p (x :| xs))
+                 -> App (NonEmpty a) arr Type p n
+elimNonEmptyPoly (sx :%| sxs) pNECons = pNECons sx sxs
 
 elimOrderingPoly :: forall (arr :: FunArrow) (p :: (Ordering -?> Type) arr) (o :: Ordering).
                     Sing o
