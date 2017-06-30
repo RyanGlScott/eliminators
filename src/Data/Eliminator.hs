@@ -24,12 +24,14 @@ module Data.Eliminator (
     -- ** Eliminators using '(->)'
     -- $eliminators
     elimBool
+  , elimEither
   , elimList
   , elimNat
   , elimTuple0
     -- ** Eliminators using '(~>)'
     -- $eliminators-TyFun
   , elimBoolTyFun
+  , elimEitherTyFun
   , elimListTyFun
   , elimNatTyFun
   , elimTuple0TyFun
@@ -42,6 +44,7 @@ module Data.Eliminator (
   , FunApp
 
   , elimBoolPoly
+  , elimEitherPoly
   , elimListPoly
   , elimNatPoly
   , elimTuple0Poly
@@ -68,6 +71,13 @@ elimBool :: forall (p :: Bool -> Type) (b :: Bool).
          -> p True
          -> p b
 elimBool = elimBoolPoly @(:->) @p @b
+
+elimEither :: forall (a :: Type) (b :: Type) (p :: Either a b -> Type) (e :: Either a b).
+              Sing e
+           -> (forall (l :: a). Sing l -> p (Left  l))
+           -> (forall (r :: b). Sing r -> p (Right r))
+           -> p e
+elimEither = elimEitherPoly @(:->) @a @b @p @e
 
 elimList :: forall (a :: Type) (p :: [a] -> Type) (l :: [a]).
             Sing l
@@ -100,6 +110,13 @@ elimBoolTyFun :: forall (p :: Bool ~> Type) (b :: Bool).
               -> p @@ True
               -> p @@ b
 elimBoolTyFun = elimBoolPoly @(:~>) @p @b
+
+elimEitherTyFun :: forall (a :: Type) (b :: Type) (p :: Either a b ~> Type) (e :: Either a b).
+                   Sing e
+                -> (forall (l :: a). Sing l -> p @@ (Left  l))
+                -> (forall (r :: b). Sing r -> p @@ (Right r))
+                -> p @@ e
+elimEitherTyFun = elimEitherPoly @(:~>) @a @b @p @e
 
 elimListTyFun :: forall (a :: Type) (p :: [a] ~> Type) (l :: [a]).
                  Sing l
@@ -167,6 +184,15 @@ elimBoolPoly :: forall (arr :: FunArrow) (p :: (Bool -?> Type) arr) (b :: Bool).
              -> App Bool arr Type p b
 elimBoolPoly SFalse pF _  = pF
 elimBoolPoly STrue  _  pT = pT
+
+elimEitherPoly :: forall (arr :: FunArrow) (a :: Type) (b :: Type) (p :: (Either a b -?> Type) arr) (e :: Either a b).
+                  FunApp arr
+               => Sing e
+               -> (forall (l :: a). Sing l -> App (Either a b) arr Type p (Left  l))
+               -> (forall (r :: b). Sing r -> App (Either a b) arr Type p (Right r))
+               -> App (Either a b) arr Type p e
+elimEitherPoly (SLeft  sl) pLeft _  = pLeft  sl
+elimEitherPoly (SRight sr) _ pRight = pRight sr
 
 elimListPoly :: forall (arr :: FunArrow) (a :: Type) (p :: ([a] -?> Type) arr) (l :: [a]).
                 FunApp arr
