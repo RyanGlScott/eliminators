@@ -34,6 +34,7 @@ test-suite spec
   other-modules:       EqualitySpec
                        GADTSpec
                        PeanoSpec
+                       PeanoTypes
   build-depends:       base       >= 4.10 && < 4.11
                      , eliminators
                      , hspec      >= 2    && < 3

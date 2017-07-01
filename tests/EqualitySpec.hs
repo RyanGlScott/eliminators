@@ -88,7 +88,6 @@ Why doesn't this typecheck?
 
 type WhySym (a :: t) (y :: t) (e :: a :~: y) = y :~: a
 data WhySymSym (a :: t) :: forall (y :: t). (a :~: y) ~> Type
-
 type instance Apply (WhySymSym z :: (z :~: y ~> Type)) x
   = WhySym z y x
 
