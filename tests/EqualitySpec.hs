@@ -6,9 +6,11 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module EqualitySpec where
 
+import           Data.Eliminator
 import           Data.Kind
 import           Data.Singletons
 import qualified Data.Type.Equality as DTE
@@ -87,10 +89,79 @@ Why doesn't this typecheck?
 -----
 
 type WhySym (a :: t) (y :: t) (e :: a :~: y) = y :~: a
-data WhySymSym (a :: t) :: forall (y :: t). (a :~: y) ~> Type
-type instance Apply (WhySymSym z :: (z :~: y ~> Type)) x
+data WhySymSym (a :: t) :: forall (y :: t). a :~: y ~> Type
+type instance Apply (WhySymSym z :: z :~: y ~> Type) x
   = WhySym z y x
 
 sym :: forall (t :: Type) (a :: t) (b :: t).
        a :~: b -> b :~: a
-sym eq = withSomeSing eq $ \(singEq :: Sing r) -> (~>:~:) @t @a @b @r @(WhySymSym a) singEq Refl
+sym eq = withSomeSing eq $ \(singEq :: Sing r) ->
+           (~>:~:) @t @a @b @r @(WhySymSym a) singEq Refl
+
+type WhyReplacePoly (arr :: FunArrow) (from :: t) (p :: (t -?> Type) arr)
+                    (y :: t) (e :: from :~: y) = App t arr Type p y
+data WhyReplacePolySym (arr :: FunArrow) (from :: t) (p :: (t -?> Type) arr)
+  :: forall (y :: t). from :~: y ~> Type
+type instance Apply (WhyReplacePolySym arr from p :: from :~: y ~> Type) x
+  = WhyReplacePoly arr from p y x
+
+replace :: forall (t :: Type) (from :: t) (to :: t) (p :: t -> Type).
+           p from
+        -> from :~: to
+        -> p to
+replace = replacePoly @(:->)
+
+replaceTyFun :: forall (t :: Type) (from :: t) (to :: t) (p :: t ~> Type).
+                p @@ from
+             -> from :~: to
+             -> p @@ to
+replaceTyFun = replacePoly @(:~>) @_ @_ @_ @p
+
+replacePoly :: forall (arr :: FunArrow) (t :: Type) (from :: t) (to :: t)
+                      (p :: (t -?> Type) arr).
+               FunApp arr
+            => App t arr Type p from
+            -> from :~: to
+            -> App t arr Type p to
+replacePoly from eq =
+  withSomeSing eq $ \(singEq :: Sing r) ->
+    (~>:~:) @t @from @to @r @(WhyReplacePolySym arr from p) singEq from
+
+type WhyLeibniz (f :: t -> Type) (a :: t) (z :: t) = f a -> f z
+data WhyLeibnizSym (f :: t -> Type) (a :: t) :: t ~> Type
+type instance Apply (WhyLeibnizSym f a) z = WhyLeibniz f a z
+
+leibniz :: forall (t :: Type) (f :: t -> Type) (a :: t) (b :: t).
+           a :~: b
+        -> f a
+        -> f b
+leibniz = replaceTyFun @t @a @b @(WhyLeibnizSym f a) id
+
+type WhyCongPoly (arr :: FunArrow) (x :: Type) (y :: Type) (f :: (x -?> y) arr)
+                 (a :: x) (z :: x) (e :: a :~: z)
+  = App x arr y f a :~: App x arr y f z
+data WhyCongPolySym (arr :: FunArrow) (x :: Type) (y :: Type) (f :: (x -?> y) arr)
+                    (a :: x) :: forall (z :: x). a :~: z ~> Type
+type instance Apply (WhyCongPolySym arr x y f a :: a :~: z ~> Type) asdf
+  = WhyCongPoly arr x y f a z asdf
+
+cong :: forall (x :: Type) (y :: Type) (f :: x -> y)
+               (a :: x) (b :: x).
+        a :~: b
+     -> f a :~: f b
+cong = congPoly @(:->) @_ @_ @f
+
+congTyFun :: forall (x :: Type) (y :: Type) (f :: x ~> y)
+                    (a :: x) (b :: x).
+             a :~: b
+          -> f @@ a :~: f @@ b
+congTyFun = congPoly @(:~>) @_ @_ @f
+
+congPoly :: forall (arr :: FunArrow) (x :: Type) (y :: Type) (f :: (x -?> y) arr)
+                   (a :: x) (b :: x).
+            FunApp arr
+         => a :~: b
+         -> App x arr y f a :~: App x arr y f b
+congPoly eq =
+  withSomeSing eq $ \(singEq :: Sing r) ->
+    (~>:~:) @x @a @b @r @(WhyCongPolySym arr x y f a) singEq Refl
