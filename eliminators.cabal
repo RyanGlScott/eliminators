@@ -1,7 +1,9 @@
 name:                eliminators
 version:             0.1
 synopsis:            Dependently typed elimination functions using singletons
--- description:
+description:         This library provides eliminators for inductive data types,
+                     leveraging the power of the @singletons@ library to allow
+                     dependently typed elimination.
 homepage:            https://github.com/RyanGlScott/eliminators
 bug-reports:         https://github.com/RyanGlScott/eliminators/issues
 license:             BSD3

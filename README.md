@@ -15,4 +15,4 @@
   https://tldrlegal.com/license/bsd-3-clause-license-%28revised%29
   "BSD 3-Clause License (Revised)"
 
-Dependently typed elimination functions using `singletons`
+This library provides eliminators for inductive data types, leveraging the power of the `singletons` library to allow dependently typed elimination.
