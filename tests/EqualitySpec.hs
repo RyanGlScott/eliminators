@@ -127,15 +127,31 @@ replacePoly from eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
     (~>:~:) @t @from @to @r @(WhyReplacePolySym arr from p) singEq from
 
-type WhyLeibniz (f :: t -> Type) (a :: t) (z :: t) = f a -> f z
-data WhyLeibnizSym (f :: t -> Type) (a :: t) :: t ~> Type
-type instance Apply (WhyLeibnizSym f a) z = WhyLeibniz f a z
+type WhyLeibnizPoly (arr :: FunArrow) (f :: (t -?> Type) arr) (a :: t) (z :: t)
+  = App t arr Type f a -> App t arr Type f z
+data WhyLeibnizPolySym (arr :: FunArrow) (f :: (t -?> Type) arr) (a :: t)
+  :: t ~> Type
+type instance Apply (WhyLeibnizPolySym arr f a) z = WhyLeibnizPoly arr f a z
 
 leibniz :: forall (t :: Type) (f :: t -> Type) (a :: t) (b :: t).
            a :~: b
         -> f a
         -> f b
-leibniz = replaceTyFun @t @a @b @(WhyLeibnizSym f a) id
+leibniz = leibnizPoly @(:->)
+
+leibnizTyFun :: forall (t :: Type) (f :: t ~> Type) (a :: t) (b :: t).
+                a :~: b
+             -> f @@ a
+             -> f @@ b
+leibnizTyFun = leibnizPoly @(:~>) @_ @f
+
+leibnizPoly :: forall (arr :: FunArrow) (t :: Type) (f :: (t -?> Type) arr)
+                      (a :: t) (b :: t).
+               FunApp arr
+            => a :~: b
+            -> App t arr Type f a
+            -> App t arr Type f b
+leibnizPoly = replaceTyFun @t @a @b @(WhyLeibnizPolySym arr f a) id
 
 type WhyCongPoly (arr :: FunArrow) (x :: Type) (y :: Type) (f :: (x -?> y) arr)
                  (a :: x) (z :: x) (e :: a :~: z)
