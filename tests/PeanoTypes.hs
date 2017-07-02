@@ -19,6 +19,26 @@ deriving instance Eq a   => Eq (Vec a n)
 deriving instance Ord a  => Ord (Vec a n)
 deriving instance Show a => Show (Vec a n)
 
+data instance Sing (z :: Vec a n) where
+  SVNil  :: Sing VNil
+  SVCons :: Sing x -> Sing xs -> Sing (VCons x xs)
+
+instance SingKind a => SingKind (Vec a n) where
+  type Demote (Vec a n) = Vec (Demote a) n
+  fromSing SVNil         = VNil
+  fromSing (SVCons x xs) = VCons (fromSing x) (fromSing xs)
+  toSing VNil = SomeSing SVNil
+  toSing (VCons x xs) =
+    withSomeSing x $ \sx ->
+      withSomeSing xs $ \sxs ->
+        SomeSing $ SVCons sx sxs
+
+instance SingI VNil where
+  sing = SVNil
+
+instance (SingI x, SingI xs) => SingI (VCons x xs) where
+  sing = SVCons sing sing
+
 type WhyMapVec (a :: Type) (b :: Type) (n :: Peano) = Vec a n -> Vec b n
 $(genDefunSymbols [''WhyMapVec])
 
