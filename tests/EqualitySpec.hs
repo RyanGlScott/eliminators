@@ -98,6 +98,20 @@ sym :: forall (t :: Type) (a :: t) (b :: t).
 sym eq = withSomeSing eq $ \(singEq :: Sing r) ->
            (~>:~:) @t @a @b @r @(WhySymSym a) singEq Refl
 
+type family Symmetry (x :: (a :: k) :~: (b :: k)) :: b :~: a where
+  Symmetry Refl = Refl
+
+type WhySymIdempotent (a :: t) (z :: t) (r :: a :~: z)
+  = Symmetry (Symmetry r) :~: r
+data WhySymIdempotentSym (a :: t) :: forall (z :: t). a :~: z ~> Type
+type instance Apply (WhySymIdempotentSym a :: a :~: z ~> Type) r
+  = WhySymIdempotent a z r
+
+symIdempotent :: forall (t :: Type) (a :: t) (b :: t)
+                        (e :: a :~: b).
+                 Sing e -> Symmetry (Symmetry e) :~: e
+symIdempotent se = (~>:~:) @t @a @b @e @(WhySymIdempotentSym a) se Refl
+
 type WhyReplacePoly (arr :: FunArrow) (from :: t) (p :: (t -?> Type) arr)
                     (y :: t) (e :: from :~: y) = App t arr Type p y
 data WhyReplacePolySym (arr :: FunArrow) (from :: t) (p :: (t -?> Type) arr)
