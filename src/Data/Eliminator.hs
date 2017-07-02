@@ -84,6 +84,7 @@ import Data.List.NonEmpty (NonEmpty(..))
 import Data.Singletons.Prelude
 import Data.Singletons.Prelude.List.NonEmpty (Sing(..))
 import Data.Singletons.TypeLits
+
 import Unsafe.Coerce (unsafeCoerce)
 
 {- $eliminators
@@ -92,8 +93,6 @@ These eliminators are defined with propositions of kind @<Datatype> -> 'Type'@
 (that is, using the '(->)' kind). As a result, these eliminators' type signatures
 are the most readable in this library, and most closely resemble eliminator functions
 in other dependently typed languages.
-
-TODO: Example
 -}
 
 elimBool :: forall (p :: Bool -> Type) (b :: Bool).
@@ -211,8 +210,6 @@ These eliminators are defined with propositions of kind @<Datatype> ~> 'Type'@
 (that is, using the '(~>)' kind). These eliminators are designed for
 defunctionalized (i.e., \"partially applied\") type families as predicates,
 and as a result, the predicates must be applied manually with '(@@)'.
-
-TODO: Example
 -}
 
 elimBoolTyFun :: forall (p :: Bool ~> Type) (b :: Bool).
@@ -352,7 +349,9 @@ class FunType (arr :: FunArrow) where
 -- | Things which can be applied.
 class FunType arr => AppType (arr :: FunArrow) where
   -- | An application of a 'Fun' to an argument.
-  -- Note that this can't be defined in the same class as Fun due to GHC restrictions.
+  --
+  -- Note that this can't be defined in the same class as 'Fun' due to GHC
+  -- restrictions on associated type families.
   type App k1 arr k2 (f :: Fun k1 arr k2) (x :: k1) :: k2
 
 -- | Something which has both a 'Fun' and an 'App'.
@@ -375,7 +374,8 @@ infixr 0 -?>
 type (-?>) (k1 :: Type) (k2 :: Type) (arr :: FunArrow) = Fun k1 arr k2
 
 -- Note: it would be nice to have an infix synonym for 'App' as well, but
--- the order in which the type variable dependencies occur makes this awkward to achieve.
+-- the order in which the type variable dependencies occur makes this awkward
+-- to achieve.
 
 elimBoolPoly :: forall (arr :: FunArrow) (p :: (Bool -?> Type) arr) (b :: Bool).
                 FunApp arr
