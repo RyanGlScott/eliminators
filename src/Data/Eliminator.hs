@@ -89,7 +89,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 {- $eliminators
 
-These eliminators are defined with propositions of kind @<Datatype> -> 'Type'@
+These eliminators are defined with propositions of kind @\<Datatype\> -> 'Type'@
 (that is, using the '(->)' kind). As a result, these eliminators' type signatures
 are the most readable in this library, and most closely resemble eliminator functions
 in other dependently typed languages.
@@ -206,7 +206,7 @@ elimTuple7 = elimTuple7Poly @(:->)
 
 {- $eliminators-TyFun
 
-These eliminators are defined with propositions of kind @<Datatype> ~> 'Type'@
+These eliminators are defined with propositions of kind @\<Datatype\> ~> 'Type'@
 (that is, using the '(~>)' kind). These eliminators are designed for
 defunctionalized (i.e., \"partially applied\") type families as predicates,
 and as a result, the predicates must be applied manually with '(@@)'.
