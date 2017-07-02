@@ -1,13 +1,8 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeInType #-}
-{-# LANGUAGE TypeOperators #-}
 module PeanoSpec where
 
-import Data.Eliminator
 import Data.Kind
 import Data.Singletons
 
@@ -35,6 +30,17 @@ spec = parallel $ do
                      ("chicken-of-the-woods" `VCons` "hen-of-woods" `VCons` VNil)
         `shouldBe` ((2, "chicken-of-the-woods") `VCons` (22, "hen-of-woods")
                                                 `VCons` VNil)
+  describe "appendVec" $ do
+    it "appends two Vecs" $ do
+      appendVec ("portabello" `VCons` "bay-bolete"
+                              `VCons` "funnel-chantrelle"
+                              `VCons` VNil)
+                ("sheathed-woodtuft" `VCons` "puffball" `VCons` VNil)
+        `shouldBe` ("portabello" `VCons` "bay-bolete"
+                                 `VCons` "funnel-chantrelle"
+                                 `VCons` "sheathed-woodtuft"
+                                 `VCons` "puffball"
+                                 `VCons` VNil)
   describe "transposeVec" $ do
     it "transposes a Vec" $ do
       transposeVec (('a' `VCons` 'b' `VCons` 'c' `VCons` VNil)
@@ -47,30 +53,6 @@ spec = parallel $ do
             `VCons` VNil)
 
 -----
-
-elimPeano :: forall (n :: Peano) (p :: Peano -> Type).
-             Sing n
-          -> p Z
-          -> (forall (k :: Peano). Sing k -> p k -> p (S k))
-          -> p n
-elimPeano = elimPeanoPoly @(:->) @n @p
-
-elimPeanoTyFun :: forall (n :: Peano) (p :: Peano ~> Type).
-                  Sing n
-               -> p @@ Z
-               -> (forall (k :: Peano). Sing k -> p @@ k -> p @@ (S k))
-               -> p @@ n
-elimPeanoTyFun = elimPeanoPoly @(:~>) @n @p
-
-elimPeanoPoly :: forall (arr :: FunArrow) (n :: Peano) (p :: (Peano -?> Type) arr).
-                 FunApp arr
-              => Sing n
-              -> App Peano arr Type p Z
-              -> (forall (k :: Peano). Sing k -> App Peano arr Type p k
-                                              -> App Peano arr Type p (S k))
-              -> App Peano arr Type p n
-elimPeanoPoly SZ pZ _ = pZ
-elimPeanoPoly (SS (sk :: Sing k)) pZ pS = pS sk (elimPeanoPoly @arr @k @p sk pZ pS)
 
 replicateVec :: forall (e :: Type) (howMany :: Peano).
                 Sing howMany -> e -> Vec e howMany
@@ -104,6 +86,20 @@ zipWithVec f = elimPeanoTyFun @n @(WhyZipWithVecSym3 a b c) (sing @_ @n) base st
          -> WhyZipWithVec a b c (S k)
     step _ zwK vaK vbK = VCons (f   (vhead vaK) (vhead vbK))
                                (zwK (vtail vaK) (vtail vbK))
+
+appendVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
+             SingI n
+          => Vec e n -> Vec e m -> Vec e (Plus n m)
+appendVec = elimPeanoTyFun @n @(WhyAppendVecSym2 e m) (sing @_ @n) base step
+  where
+    base :: WhyAppendVec e m Z
+    base _ = id
+
+    step :: forall (k :: Peano).
+            Sing k
+         -> WhyAppendVec e m k
+         -> WhyAppendVec e m (S k)
+    step _ avK vK1 vK2 = VCons (vhead vK1) (avK (vtail vK1) vK2)
 
 transposeVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
                 (SingI n, SingI m)
