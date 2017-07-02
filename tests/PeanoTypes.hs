@@ -79,6 +79,28 @@ instance SingI VNil where
 instance (SingI x, SingI xs) => SingI (VCons x xs) where
   sing = SVCons sing sing
 
+elimVec :: forall (a :: Type) (n :: Peano)
+                  (p :: forall (k :: Peano). Vec a k -> Type) (v :: Vec a n).
+           Sing v
+        -> p VNil
+        -> (forall (k :: Peano) (x :: a) (xs :: Vec a k).
+                   Sing x -> Sing xs -> p xs -> p (VCons x xs))
+        -> p v
+elimVec SVNil pVNil _ = pVNil
+elimVec (SVCons sx (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
+  pVCons sx sxs (elimVec @a @k @p @xs sxs pVNil pVCons)
+
+elimVecTyFun :: forall (a :: Type) (n :: Peano)
+                       (p :: forall (k :: Peano). Vec a k ~> Type) (v :: Vec a n).
+                Sing v
+             -> p @@ VNil
+             -> (forall (k :: Peano) (x :: a) (xs :: Vec a k).
+                        Sing x -> Sing xs -> p @@ xs -> p @@ (VCons x xs))
+             -> p @@ v
+elimVecTyFun SVNil pVNil _ = pVNil
+elimVecTyFun (SVCons sx (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
+  pVCons sx sxs (elimVecTyFun @a @k @p @xs sxs pVNil pVCons)
+
 type WhyMapVec (a :: Type) (b :: Type) (n :: Peano) = Vec a n -> Vec b n
 $(genDefunSymbols [''WhyMapVec])
 
@@ -93,3 +115,10 @@ $(genDefunSymbols [''WhyAppendVec])
 type WhyTransposeVec (e :: Type) (m :: Peano) (n :: Peano)
   = Vec (Vec e m) n -> Vec (Vec e n) m
 $(genDefunSymbols [''WhyTransposeVec])
+
+type WhyConcatVec (e :: Type) (j :: Peano) (n :: Peano) (l :: Vec (Vec e j) n)
+  = Vec e (Times n j)
+data WhyConcatVecSym (e :: Type) (j :: Peano)
+  :: forall (n :: Peano). Vec (Vec e j) n ~> Type
+type instance Apply (WhyConcatVecSym e j :: Vec (Vec e j) n ~> Type) l
+  = WhyConcatVec e j n l

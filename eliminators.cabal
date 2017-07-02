@@ -39,6 +39,7 @@ test-suite spec
                        ListTypes
                        PeanoSpec
                        PeanoTypes
+                       VecSpec
   build-depends:       base       >= 4.10 && < 4.11
                      , eliminators
                      , hspec      >= 2    && < 3
