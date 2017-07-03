@@ -50,6 +50,34 @@ elimSoPoly :: forall (arr :: FunArrow) (what :: Bool) (s :: So what)
 elimSoPoly SOh pOh = pOh
 -}
 
+data Flarble (a :: Type) (b :: Type) where
+  MkFlarble1 :: a -> Flarble a b
+  MkFlarble2 :: Flarble Bool Bool
+
+data instance Sing (z :: Flarble a b) where
+  SMkFlarble1 :: Sing x -> Sing (MkFlarble1 x)
+  SMkFlarble2 :: Sing MkFlarble2
+
+elimFlarble :: forall (a :: Type) (b :: Type)
+                      (p :: forall (x :: Type) (y :: Type). Flarble x y -> Type)
+                      (f :: Flarble a b).
+               Sing f
+            -> (forall (x :: a). Sing x -> p (MkFlarble1 x :: Flarble a b))
+            -> p (MkFlarble2 :: Flarble Bool Bool)
+            -> p f
+elimFlarble (SMkFlarble1 sx) pMkFlarble1 _ = pMkFlarble1 sx
+elimFlarble SMkFlarble2 _ pMkFlarble2 = pMkFlarble2
+
+elimFlarbleTyFun :: forall (a :: Type) (b :: Type)
+                           (p :: forall (x :: Type) (y :: Type). Flarble x y ~> Type)
+                           (f :: Flarble a b).
+                    Sing f
+                 -> (forall (x :: a). Sing x -> p @@ (MkFlarble1 x :: Flarble a b))
+                 -> p @@ (MkFlarble2 :: Flarble Bool Bool)
+                 -> p @@ f
+elimFlarbleTyFun (SMkFlarble1 sx) pMkFlarble1 _ = pMkFlarble1 sx
+elimFlarbleTyFun SMkFlarble2 _ pMkFlarble2 = pMkFlarble2
+
 data Obj :: Type where
   MkObj :: o -> Obj
 
