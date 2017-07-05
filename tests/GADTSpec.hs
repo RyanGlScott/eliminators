@@ -52,7 +52,7 @@ elimSoPoly SOh pOh = pOh
 
 data Flarble (a :: Type) (b :: Type) where
   MkFlarble1 :: a -> Flarble a b
-  MkFlarble2 :: Flarble Bool Bool
+  MkFlarble2 :: a ~ Bool => Flarble a (Maybe b)
 
 data instance Sing (z :: Flarble a b) where
   SMkFlarble1 :: Sing x -> Sing (MkFlarble1 x)
@@ -62,21 +62,29 @@ elimFlarble :: forall (a :: Type) (b :: Type)
                       (p :: forall (x :: Type) (y :: Type). Flarble x y -> Type)
                       (f :: Flarble a b).
                Sing f
-            -> (forall (x :: a). Sing x -> p (MkFlarble1 x :: Flarble a b))
-            -> p (MkFlarble2 :: Flarble Bool Bool)
+            -> (forall (a' :: Type) (b' :: Type) (x :: a'). Sing x -> p (MkFlarble1 x :: Flarble a' b'))
+            -> (forall (b' :: Type). p (MkFlarble2 :: Flarble Bool (Maybe b')))
             -> p f
-elimFlarble (SMkFlarble1 sx) pMkFlarble1 _ = pMkFlarble1 sx
-elimFlarble SMkFlarble2 _ pMkFlarble2 = pMkFlarble2
+elimFlarble s@(SMkFlarble1 sx) pMkFlarble1 _ =
+  case s of
+    (_ :: Sing (MkFlarble1 x :: Flarble a' b')) -> pMkFlarble1 @a' @b' @x sx
+elimFlarble s@SMkFlarble2 _ pMkFlarble2 =
+  case s of
+    (_ :: Sing (MkFlarble2 :: Flarble Bool (Maybe b'))) -> pMkFlarble2 @b'
 
 elimFlarbleTyFun :: forall (a :: Type) (b :: Type)
                            (p :: forall (x :: Type) (y :: Type). Flarble x y ~> Type)
                            (f :: Flarble a b).
                     Sing f
-                 -> (forall (x :: a). Sing x -> p @@ (MkFlarble1 x :: Flarble a b))
-                 -> p @@ (MkFlarble2 :: Flarble Bool Bool)
+                 -> (forall (a' :: Type) (b' :: Type) (x :: a'). Sing x -> p @@ (MkFlarble1 x :: Flarble a' b'))
+                 -> (forall (b' :: Type). p @@ (MkFlarble2 :: Flarble Bool (Maybe b')))
                  -> p @@ f
-elimFlarbleTyFun (SMkFlarble1 sx) pMkFlarble1 _ = pMkFlarble1 sx
-elimFlarbleTyFun SMkFlarble2 _ pMkFlarble2 = pMkFlarble2
+elimFlarbleTyFun s@(SMkFlarble1 sx) pMkFlarble1 _ =
+  case s of
+    (_ :: Sing (MkFlarble1 x :: Flarble a' b')) -> pMkFlarble1 @a' @b' @x sx
+elimFlarbleTyFun s@SMkFlarble2 _ pMkFlarble2 =
+  case s of
+    (_ :: Sing (MkFlarble2 :: Flarble Bool (Maybe b'))) -> pMkFlarble2 @b'
 
 data Obj :: Type where
   MkObj :: o -> Obj
