@@ -62,12 +62,12 @@ elimFlarble :: forall (a :: Type) (b :: Type)
                       (p :: forall (x :: Type) (y :: Type). Flarble x y -> Type)
                       (f :: Flarble a b).
                Sing f
-            -> (forall (a' :: Type) (b' :: Type) (x :: a'). Sing x -> p (MkFlarble1 x :: Flarble a' b'))
+            -> (forall (x :: a). Sing x -> p (MkFlarble1 x :: Flarble a b))
             -> (forall (b' :: Type). p (MkFlarble2 :: Flarble Bool (Maybe b')))
             -> p f
 elimFlarble s@(SMkFlarble1 sx) pMkFlarble1 _ =
   case s of
-    (_ :: Sing (MkFlarble1 x :: Flarble a' b')) -> pMkFlarble1 @a' @b' @x sx
+    (_ :: Sing (MkFlarble1 x :: Flarble a b)) -> pMkFlarble1 @x sx
 elimFlarble s@SMkFlarble2 _ pMkFlarble2 =
   case s of
     (_ :: Sing (MkFlarble2 :: Flarble Bool (Maybe b'))) -> pMkFlarble2 @b'
@@ -76,12 +76,12 @@ elimFlarbleTyFun :: forall (a :: Type) (b :: Type)
                            (p :: forall (x :: Type) (y :: Type). Flarble x y ~> Type)
                            (f :: Flarble a b).
                     Sing f
-                 -> (forall (a' :: Type) (b' :: Type) (x :: a'). Sing x -> p @@ (MkFlarble1 x :: Flarble a' b'))
+                 -> (forall (x :: a). Sing x -> p @@ (MkFlarble1 x :: Flarble a b))
                  -> (forall (b' :: Type). p @@ (MkFlarble2 :: Flarble Bool (Maybe b')))
                  -> p @@ f
 elimFlarbleTyFun s@(SMkFlarble1 sx) pMkFlarble1 _ =
   case s of
-    (_ :: Sing (MkFlarble1 x :: Flarble a' b')) -> pMkFlarble1 @a' @b' @x sx
+    (_ :: Sing (MkFlarble1 x :: Flarble a b)) -> pMkFlarble1 @x sx
 elimFlarbleTyFun s@SMkFlarble2 _ pMkFlarble2 =
   case s of
     (_ :: Sing (MkFlarble2 :: Flarble Bool (Maybe b'))) -> pMkFlarble2 @b'
