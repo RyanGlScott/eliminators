@@ -74,16 +74,11 @@ instance SingI HRefl where
          -> p r
 (->:~~:) SHRefl pHRefl = pHRefl
 
-{-
-This doesn't typecheck at the moment due to GHC Trac #13879.
-TODO: Uncomment this when the fix becomes available.
-
 (~>:~~:) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (r :: a :~~: b) (p :: forall (z :: Type) (y :: z). a :~~: y ~> Type).
             Sing r
          -> p @@ HRefl
          -> p @@ r
 (~>:~~:) SHRefl pHRefl = pHRefl
--}
 
 -- (-?>:~~:)
 
