@@ -56,7 +56,7 @@ spec = parallel $ do
 
 replicateVec :: forall (e :: Type) (howMany :: Peano).
                 Sing howMany -> e -> Vec e howMany
-replicateVec s e = elimPeano @howMany @(Vec e) s VNil step
+replicateVec s e = elimPeano @howMany @(TyCon1 (Vec e)) s VNil step
   where
     step :: forall (k :: Peano). Sing k -> Vec e k -> Vec e (S k)
     step _ = VCons e
@@ -64,7 +64,7 @@ replicateVec s e = elimPeano @howMany @(Vec e) s VNil step
 mapVec :: forall (a :: Type) (b :: Type) (n :: Peano).
           SingI n
        => (a -> b) -> Vec a n -> Vec b n
-mapVec f = elimPeanoTyFun @n @(WhyMapVecSym2 a b) (sing @_ @n) base step
+mapVec f = elimPeano @n @(WhyMapVecSym2 a b) (sing @_ @n) base step
   where
     base :: WhyMapVec a b Z
     base _ = VNil
@@ -75,7 +75,7 @@ mapVec f = elimPeanoTyFun @n @(WhyMapVecSym2 a b) (sing @_ @n) base step
 zipWithVec :: forall (a :: Type) (b :: Type) (c :: Type) (n :: Peano).
               SingI n
            => (a -> b -> c) -> Vec a n -> Vec b n -> Vec c n
-zipWithVec f = elimPeanoTyFun @n @(WhyZipWithVecSym3 a b c) (sing @_ @n) base step
+zipWithVec f = elimPeano @n @(WhyZipWithVecSym3 a b c) (sing @_ @n) base step
   where
     base :: WhyZipWithVec a b c Z
     base _ _ = VNil
@@ -90,7 +90,7 @@ zipWithVec f = elimPeanoTyFun @n @(WhyZipWithVecSym3 a b c) (sing @_ @n) base st
 appendVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
              SingI n
           => Vec e n -> Vec e m -> Vec e (Plus n m)
-appendVec = elimPeanoTyFun @n @(WhyAppendVecSym2 e m) (sing @_ @n) base step
+appendVec = elimPeano @n @(WhyAppendVecSym2 e m) (sing @_ @n) base step
   where
     base :: WhyAppendVec e m Z
     base _ = id
@@ -104,7 +104,7 @@ appendVec = elimPeanoTyFun @n @(WhyAppendVecSym2 e m) (sing @_ @n) base step
 transposeVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
                 (SingI n, SingI m)
              => Vec (Vec e m) n -> Vec (Vec e n) m
-transposeVec = elimPeanoTyFun @n @(WhyTransposeVecSym2 e m) (sing @_ @n) base step
+transposeVec = elimPeano @n @(WhyTransposeVecSym2 e m) (sing @_ @n) base step
   where
     base :: WhyTransposeVec e m Z
     base _ = replicateVec (sing @_ @m) VNil

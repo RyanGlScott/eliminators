@@ -31,7 +31,7 @@ concatVec :: forall (e :: Type) (n :: Peano) (j :: Peano).
              (SingKind e, SingI j, e ~ Demote e)
           => Vec (Vec e j) n -> Vec e (Times n j)
 concatVec l = withSomeSing l $ \(singL :: Sing l) ->
-                elimVecTyFun @(Vec e j) @n @(WhyConcatVecSym e j) @l singL base step
+                elimVec @(Vec e j) @n @(WhyConcatVecSym e j) @l singL base step
   where
     base :: WhyConcatVec e j Z VNil
     base = VNil

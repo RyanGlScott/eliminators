@@ -11,7 +11,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 module PeanoTypes where
 
-import Data.Eliminator
 import Data.Kind
 import Data.Singletons.TH
 
@@ -27,29 +26,13 @@ $(singletons [d|
   times (S k) m = plus m (times k m)
   |])
 
-elimPeano :: forall (n :: Peano) (p :: Peano -> Type).
+elimPeano :: forall (n :: Peano) (p :: Peano ~> Type).
              Sing n
-          -> p Z
-          -> (forall (k :: Peano). Sing k -> p k -> p (S k))
-          -> p n
-elimPeano = elimPeanoPoly @(:->) @n @p
-
-elimPeanoTyFun :: forall (n :: Peano) (p :: Peano ~> Type).
-                  Sing n
-               -> p @@ Z
-               -> (forall (k :: Peano). Sing k -> p @@ k -> p @@ (S k))
-               -> p @@ n
-elimPeanoTyFun = elimPeanoPoly @(:~>) @n @p
-
-elimPeanoPoly :: forall (arr :: FunArrow) (n :: Peano) (p :: (Peano -?> Type) arr).
-                 FunApp arr
-              => Sing n
-              -> App Peano arr Type p Z
-              -> (forall (k :: Peano). Sing k -> App Peano arr Type p k
-                                              -> App Peano arr Type p (S k))
-              -> App Peano arr Type p n
-elimPeanoPoly SZ pZ _ = pZ
-elimPeanoPoly (SS (sk :: Sing k)) pZ pS = pS sk (elimPeanoPoly @arr @k @p sk pZ pS)
+          -> p @@ Z
+          -> (forall (k :: Peano). Sing k -> p @@ k -> p @@ (S k))
+          -> p @@ n
+elimPeano SZ pZ _ = pZ
+elimPeano (SS (sk :: Sing k)) pZ pS = pS sk (elimPeano @k @p sk pZ pS)
 
 data Vec a (n :: Peano) where
   VNil  :: Vec a Z
@@ -80,26 +63,15 @@ instance (SingI x, SingI xs) => SingI (VCons x xs) where
   sing = SVCons sing sing
 
 elimVec :: forall (a :: Type) (n :: Peano)
-                  (p :: forall (k :: Peano). Vec a k -> Type) (v :: Vec a n).
+                  (p :: forall (k :: Peano). Vec a k ~> Type) (v :: Vec a n).
            Sing v
-        -> p VNil
+        -> p @@ VNil
         -> (forall (k :: Peano) (x :: a) (xs :: Vec a k).
-                   Sing x -> Sing xs -> p xs -> p (VCons x xs))
-        -> p v
+                   Sing x -> Sing xs -> p @@ xs -> p @@ (VCons x xs))
+        -> p @@ v
 elimVec SVNil pVNil _ = pVNil
 elimVec (SVCons sx (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
   pVCons sx sxs (elimVec @a @k @p @xs sxs pVNil pVCons)
-
-elimVecTyFun :: forall (a :: Type) (n :: Peano)
-                       (p :: forall (k :: Peano). Vec a k ~> Type) (v :: Vec a n).
-                Sing v
-             -> p @@ VNil
-             -> (forall (k :: Peano) (x :: a) (xs :: Vec a k).
-                        Sing x -> Sing xs -> p @@ xs -> p @@ (VCons x xs))
-             -> p @@ v
-elimVecTyFun SVNil pVNil _ = pVNil
-elimVecTyFun (SVCons sx (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
-  pVCons sx sxs (elimVecTyFun @a @k @p @xs sxs pVNil pVCons)
 
 type WhyMapVec (a :: Type) (b :: Type) (n :: Peano) = Vec a n -> Vec b n
 $(genDefunSymbols [''WhyMapVec])
