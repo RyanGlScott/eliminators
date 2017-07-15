@@ -1,6 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeInType #-}
+{-# LANGUAGE TypeOperators #-}
 module PeanoSpec where
 
 import Data.Kind
@@ -89,7 +90,7 @@ zipWithVec f = elimPeano @n @(WhyZipWithVecSym3 a b c) (sing @_ @n) base step
 
 appendVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
              SingI n
-          => Vec e n -> Vec e m -> Vec e (Plus n m)
+          => Vec e n -> Vec e m -> Vec e (n `Plus` m)
 appendVec = elimPeano @n @(WhyAppendVecSym2 e m) (sing @_ @n) base step
   where
     base :: WhyAppendVec e m Z

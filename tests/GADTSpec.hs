@@ -26,6 +26,7 @@ data So :: Bool -> Type where
 
 data instance Sing (z :: So what) where
   SOh :: Sing Oh
+type SSo = (Sing :: So what -> Type)
 
 elimSo :: forall (what :: Bool) (s :: So what) (p :: forall (long_sucker :: Bool). So long_sucker ~> Type).
           Sing s
@@ -40,6 +41,7 @@ data Flarble (a :: Type) (b :: Type) where
 data instance Sing (z :: Flarble a b) where
   SMkFlarble1 :: Sing x -> Sing (MkFlarble1 x)
   SMkFlarble2 :: Sing MkFlarble2
+type SFlarble = (Sing :: Flarble a b -> Type)
 
 elimFlarble :: forall (a :: Type) (b :: Type)
                       (p :: forall (x :: Type) (y :: Type). Flarble x y ~> Type)
@@ -60,6 +62,7 @@ data Obj :: Type where
 
 data instance Sing (z :: Obj) where
   SMkObj :: forall (obj :: obiwan). Sing obj -> Sing (MkObj obj)
+type SObj = (Sing :: Obj -> Type)
 
 elimObj :: forall (o :: Obj) (p :: Obj ~> Type).
            Sing o

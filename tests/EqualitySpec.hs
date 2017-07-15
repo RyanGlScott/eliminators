@@ -33,6 +33,7 @@ spec = parallel $ do
 
 data instance Sing (z :: a :~: b) where
   SRefl :: Sing Refl
+type (%:~:) = (Sing :: (a :: k) :~: (b :: k) -> Type)
 
 instance SingKind (a :~: b) where
   type Demote (a :~: b) = a :~: b
@@ -50,6 +51,7 @@ instance SingI Refl where
 
 data instance Sing (z :: a :~~: b) where
   SHRefl :: Sing HRefl
+type (%:~~:) = (Sing :: (a :: j) :~~: (b :: k) -> Type)
 
 instance SingKind (a :~~: b) where
   type Demote (a :~~: b) = a :~~: b

@@ -30,7 +30,7 @@ spec = parallel $ do
 
 concatVec :: forall (e :: Type) (n :: Peano) (j :: Peano).
              (SingKind e, SingI j, e ~ Demote e)
-          => Vec (Vec e j) n -> Vec e (Times n j)
+          => Vec (Vec e j) n -> Vec e (n `Times` j)
 concatVec l = withSomeSing l $ \(singL :: Sing l) ->
                 elimVec @(Vec e j) @n @(WhyConcatVecSym e j) @l singL base step
   where
