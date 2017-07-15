@@ -2,6 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeInType #-}
+{-# LANGUAGE TypeOperators #-}
 module VecSpec where
 
 import Data.Kind
@@ -19,11 +20,11 @@ spec :: Spec
 spec = parallel $ do
   describe "concatVec" $ do
     it "concats a Vec of Vecs" $ do
-      concatVec ((False `VCons` True  `VCons` False `VCons` VNil)
-         `VCons` (True  `VCons` False `VCons` True  `VCons` VNil)
-         `VCons` VNil)
-        `shouldBe` (False `VCons` True  `VCons` False `VCons` True
-                          `VCons` False `VCons` True  `VCons` VNil)
+      concatVec ((False :# True  :# False :# VNil)
+              :# (True  :# False :# True  :# VNil)
+              :# VNil)
+        `shouldBe` (False :# True  :# False :# True
+                          :# False :# True  :# VNil)
 
 -----
 
@@ -39,5 +40,5 @@ concatVec l = withSomeSing l $ \(singL :: Sing l) ->
     step :: forall (k :: Peano) (x :: Vec e j) (xs :: Vec (Vec e j) k).
                    Sing x -> Sing xs
                 -> WhyConcatVec e j k     xs
-                -> WhyConcatVec e j (S k) (VCons x xs)
+                -> WhyConcatVec e j (S k) (x :# xs)
     step h _ vKJ = appendVec (fromSing h) vKJ

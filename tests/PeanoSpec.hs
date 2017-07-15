@@ -19,38 +19,38 @@ spec = parallel $ do
     it "works with empty lists" $
       replicateVec SZ () `shouldBe` VNil
     it "works with non-empty lists" $
-      replicateVec (SS SZ) () `shouldBe` VCons () VNil
+      replicateVec (SS SZ) () `shouldBe` () :# VNil
   describe "mapVec" $ do
     it "maps over a Vec" $ do
-      mapVec reverse ("hello" `VCons` "world" `VCons` VNil)
-        `shouldBe` ("olleh" `VCons` "dlrow" `VCons` VNil)
+      mapVec reverse ("hello" :# "world" :# VNil)
+          `shouldBe` ("olleh" :# "dlrow" :# VNil)
   describe "zipWithVec" $ do
     it "zips two Vecs" $ do
-      zipWithVec (,) ((2 :: Int) `VCons` 22 `VCons` VNil)
-                     ("chicken-of-the-woods" `VCons` "hen-of-woods" `VCons` VNil)
-        `shouldBe` ((2, "chicken-of-the-woods") `VCons` (22, "hen-of-woods")
-                                                `VCons` VNil)
+      zipWithVec (,) ((2 :: Int) :# 22 :# VNil)
+                     ("chicken-of-the-woods" :# "hen-of-woods" :# VNil)
+        `shouldBe` ((2, "chicken-of-the-woods") :# (22, "hen-of-woods")
+                                                :# VNil)
   describe "appendVec" $ do
     it "appends two Vecs" $ do
-      appendVec ("portabello" `VCons` "bay-bolete"
-                              `VCons` "funnel-chantrelle"
-                              `VCons` VNil)
-                ("sheathed-woodtuft" `VCons` "puffball" `VCons` VNil)
-        `shouldBe` ("portabello" `VCons` "bay-bolete"
-                                 `VCons` "funnel-chantrelle"
-                                 `VCons` "sheathed-woodtuft"
-                                 `VCons` "puffball"
-                                 `VCons` VNil)
+      appendVec ("portabello" :# "bay-bolete"
+                              :# "funnel-chantrelle"
+                              :# VNil)
+                ("sheathed-woodtuft" :# "puffball" :# VNil)
+        `shouldBe` ("portabello" :# "bay-bolete"
+                                 :# "funnel-chantrelle"
+                                 :# "sheathed-woodtuft"
+                                 :# "puffball"
+                                 :# VNil)
   describe "transposeVec" $ do
     it "transposes a Vec" $ do
-      transposeVec (('a' `VCons` 'b' `VCons` 'c' `VCons` VNil)
-            `VCons` ('d' `VCons` 'e' `VCons` 'f' `VCons` VNil)
-            `VCons` VNil)
+      transposeVec (('a' :# 'b' :# 'c' :# VNil)
+                 :# ('d' :# 'e' :# 'f' :# VNil)
+                 :# VNil)
         `shouldBe`
-                   (('a' `VCons` 'd' `VCons` VNil)
-            `VCons` ('b' `VCons` 'e' `VCons` VNil)
-            `VCons` ('c' `VCons` 'f' `VCons` VNil)
-            `VCons` VNil)
+                   (('a' :# 'd' :# VNil)
+                 :# ('b' :# 'e' :# VNil)
+                 :# ('c' :# 'f' :# VNil)
+                 :# VNil)
 
 -----
 
@@ -59,7 +59,7 @@ replicateVec :: forall (e :: Type) (howMany :: Peano).
 replicateVec s e = elimPeano @howMany @(TyCon1 (Vec e)) s VNil step
   where
     step :: forall (k :: Peano). Sing k -> Vec e k -> Vec e (S k)
-    step _ = VCons e
+    step _ = (e :#)
 
 mapVec :: forall (a :: Type) (b :: Type) (n :: Peano).
           SingI n
@@ -70,7 +70,7 @@ mapVec f = elimPeano @n @(WhyMapVecSym2 a b) (sing @_ @n) base step
     base _ = VNil
 
     step :: forall (k :: Peano). Sing k -> WhyMapVec a b k -> WhyMapVec a b (S k)
-    step _ mapK vK = VCons (f (vhead vK)) (mapK (vtail vK))
+    step _ mapK vK = f (vhead vK) :# mapK (vtail vK)
 
 zipWithVec :: forall (a :: Type) (b :: Type) (c :: Type) (n :: Peano).
               SingI n
@@ -84,8 +84,8 @@ zipWithVec f = elimPeano @n @(WhyZipWithVecSym3 a b c) (sing @_ @n) base step
             Sing k
          -> WhyZipWithVec a b c k
          -> WhyZipWithVec a b c (S k)
-    step _ zwK vaK vbK = VCons (f   (vhead vaK) (vhead vbK))
-                               (zwK (vtail vaK) (vtail vbK))
+    step _ zwK vaK vbK = f   (vhead vaK) (vhead vbK)
+                      :# zwK (vtail vaK) (vtail vbK)
 
 appendVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
              SingI n
@@ -99,7 +99,7 @@ appendVec = elimPeano @n @(WhyAppendVecSym2 e m) (sing @_ @n) base step
             Sing k
          -> WhyAppendVec e m k
          -> WhyAppendVec e m (S k)
-    step _ avK vK1 vK2 = VCons (vhead vK1) (avK (vtail vK1) vK2)
+    step _ avK vK1 vK2 = vhead vK1 :# avK (vtail vK1) vK2
 
 transposeVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
                 (SingI n, SingI m)
@@ -113,4 +113,4 @@ transposeVec = elimPeano @n @(WhyTransposeVecSym2 e m) (sing @_ @n) base step
             Sing k
          -> WhyTransposeVec e m k
          -> WhyTransposeVec e m (S k)
-    step _ transK vK = zipWithVec VCons (vhead vK) (transK (vtail vK))
+    step _ transK vK = zipWithVec (:#) (vhead vK) (transK (vtail vK))

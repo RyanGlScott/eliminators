@@ -35,42 +35,43 @@ elimPeano SZ pZ _ = pZ
 elimPeano (SS (sk :: Sing k)) pZ pS = pS sk (elimPeano @k @p sk pZ pS)
 
 data Vec a (n :: Peano) where
-  VNil  :: Vec a Z
-  VCons :: { vhead :: a, vtail :: Vec a n } -> Vec a (S n)
-infixr 5 `VCons`
+  VNil :: Vec a Z
+  (:#) :: { vhead :: a, vtail :: Vec a n } -> Vec a (S n)
+infixr 5 :#
 deriving instance Eq a   => Eq (Vec a n)
 deriving instance Ord a  => Ord (Vec a n)
 deriving instance Show a => Show (Vec a n)
 
 data instance Sing (z :: Vec a n) where
-  SVNil  :: Sing VNil
-  SVCons :: { sVhead :: Sing x, sVtail :: Sing xs } -> Sing (VCons x xs)
+  SVNil :: Sing VNil
+  (:%#) :: { sVhead :: Sing x, sVtail :: Sing xs } -> Sing (x :# xs)
+infixr 5 :%#
 
 instance SingKind a => SingKind (Vec a n) where
   type Demote (Vec a n) = Vec (Demote a) n
-  fromSing SVNil         = VNil
-  fromSing (SVCons x xs) = VCons (fromSing x) (fromSing xs)
+  fromSing SVNil      = VNil
+  fromSing (x :%# xs) = fromSing x :# fromSing xs
   toSing VNil = SomeSing SVNil
-  toSing (VCons x xs) =
+  toSing (x :# xs) =
     withSomeSing x $ \sx ->
       withSomeSing xs $ \sxs ->
-        SomeSing $ SVCons sx sxs
+        SomeSing $ sx :%# sxs
 
 instance SingI VNil where
   sing = SVNil
 
-instance (SingI x, SingI xs) => SingI (VCons x xs) where
-  sing = SVCons sing sing
+instance (SingI x, SingI xs) => SingI (x :# xs) where
+  sing = sing :%# sing
 
 elimVec :: forall (a :: Type) (n :: Peano)
                   (p :: forall (k :: Peano). Vec a k ~> Type) (v :: Vec a n).
            Sing v
         -> p @@ VNil
         -> (forall (k :: Peano) (x :: a) (xs :: Vec a k).
-                   Sing x -> Sing xs -> p @@ xs -> p @@ (VCons x xs))
+                   Sing x -> Sing xs -> p @@ xs -> p @@ (x :# xs))
         -> p @@ v
 elimVec SVNil pVNil _ = pVNil
-elimVec (SVCons sx (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
+elimVec (sx :%# (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
   pVCons sx sxs (elimVec @a @k @p @xs sxs pVNil pVCons)
 
 type WhyMapVec (a :: Type) (b :: Type) (n :: Peano) = Vec a n -> Vec b n
