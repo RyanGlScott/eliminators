@@ -69,13 +69,23 @@ instance SingI HRefl where
 
 type WhySym (a :: t) (y :: t) (e :: a :~: y) = y :~: a
 data WhySymSym (a :: t) :: forall (y :: t). a :~: y ~> Type
-type instance Apply (WhySymSym z :: z :~: y ~> Type) x
-  = WhySym z y x
+type instance Apply (WhySymSym a :: a :~: y ~> Type) x
+  = WhySym a y x
 
 sym :: forall (t :: Type) (a :: t) (b :: t).
        a :~: b -> b :~: a
 sym eq = withSomeSing eq $ \(singEq :: Sing r) ->
            (~>:~:) @t @a @b @r @(WhySymSym a) singEq Refl
+
+type WhyHsym (a :: j) (y :: z) (e :: a :~~: y) = y :~~: a
+data WhyHsymSym (a :: j) :: forall (z :: Type) (y :: z). a :~~: y ~> Type
+type instance Apply (WhyHsymSym a :: a :~~: y ~> Type) x
+  = WhyHsym a y x
+
+hsym :: forall (j :: Type) (k :: Type) (a :: j) (b :: k).
+        a :~~: b -> b :~~: a
+hsym eq = withSomeSing eq $ \(singEq :: Sing r) ->
+            (~>:~~:) @j @k @a @b @r @(WhyHsymSym a) singEq HRefl
 
 type family Symmetry (x :: (a :: k) :~: (b :: k)) :: b :~: a where
   Symmetry Refl = Refl
@@ -91,6 +101,20 @@ symIdempotent :: forall (t :: Type) (a :: t) (b :: t)
                  Sing e -> Symmetry (Symmetry e) :~: e
 symIdempotent se = (~>:~:) @t @a @b @e @(WhySymIdempotentSym a) se Refl
 
+type family Hsymmetry (x :: (a :: j) :~~: (b :: k)) :: b :~~: a where
+  Hsymmetry HRefl = HRefl
+
+type WhyHsymIdempotent (a :: j) (y :: z) (r :: a :~~: y)
+  = Hsymmetry (Hsymmetry r) :~: r
+data WhyHsymIdempotentSym (a :: j) :: forall (z :: Type) (y :: z). a :~~: y ~> Type
+type instance Apply (WhyHsymIdempotentSym a :: a :~~: y ~> Type) r
+  = WhyHsymIdempotent a y r
+
+hsymIdempotent :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
+                         (e :: a :~~: b).
+                  Sing e -> Hsymmetry (Hsymmetry e) :~: e
+hsymIdempotent se = (~>:~~:) @j @k @a @b @e @(WhyHsymIdempotentSym a) se Refl
+
 type WhyReplace (from :: t) (p :: t ~> Type)
                 (y :: t) (e :: from :~: y) = p @@ y
 data WhyReplaceSym (from :: t) (p :: t ~> Type)
@@ -105,6 +129,24 @@ replace :: forall (t :: Type) (from :: t) (to :: t) (p :: t ~> Type).
 replace from eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
     (~>:~:) @t @from @to @r @(WhyReplaceSym from p) singEq from
+
+{-
+type WhyHreplace (from :: j) (p :: forall (z :: Type). z ~> Type)
+                 (y :: k) (e :: from :~~: y) = p @@ y
+data WhyHreplaceSym (from :: j) (p :: forall (z :: Type). z ~> Type)
+  :: forall (k :: Type) (y :: k). from :~~: y ~> Type
+type instance Apply (WhyHreplaceSym from p :: from :~~: y ~> Type) x
+  = WhyHreplace from p y x
+
+hreplace :: forall (j :: Type) (k :: Type) (from :: j) (to :: k)
+                   (p :: forall (z :: Type). z ~> Type).
+            p @@ from
+         -> from :~~: to
+         -> p @@ to
+hreplace from heq =
+  withSomeSing eq $ \(singEq :: Sing r) ->
+    (~>:~~:) @j @k @from @to @(WhyHreplaceSym from p) singEq from
+-}
 
 type WhyLeibniz (f :: t ~> Type) (a :: t) (z :: t)
   = f @@ a -> f @@ z
