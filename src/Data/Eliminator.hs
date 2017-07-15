@@ -38,13 +38,15 @@ module Data.Eliminator (
   , elimTuple7
   ) where
 
-import Data.Kind (Type)
-import Data.List.NonEmpty (NonEmpty(..))
-import Data.Singletons.Prelude
-import Data.Singletons.Prelude.List.NonEmpty (Sing(..))
-import Data.Singletons.TypeLits
+import           Data.Kind (Type)
+import           Data.List.NonEmpty (NonEmpty(..))
+import           Data.Singletons.Prelude
+import           Data.Singletons.Prelude.List.NonEmpty (Sing(..))
+import           Data.Singletons.TypeLits
 
-import Unsafe.Coerce (unsafeCoerce)
+import qualified GHC.TypeLits as TL
+
+import           Unsafe.Coerce (unsafeCoerce)
 
 {- $eliminators
 
@@ -94,16 +96,18 @@ elimMaybe :: forall (a :: Type) (p :: Maybe a ~> Type) (m :: Maybe a).
 elimMaybe SNothing pNothing _ = pNothing
 elimMaybe (SJust sx) _ pJust  = pJust sx
 
+-- | Although 'Nat' is not actually an inductive data type in GHC, we can
+-- pretend that it is using this eliminator.
 elimNat :: forall (p :: Nat ~> Type) (n :: Nat).
            Sing n
         -> p @@ 0
-        -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k :+ 1))
+        -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k TL.+ 1))
         -> p @@ n
 elimNat snat pZ pS =
   case fromSing snat of
     0        -> unsafeCoerce pZ
-    nPlusOne -> case toSing (pred nPlusOne) of
-                  SomeSing (sn :: Sing k) -> unsafeCoerce (pS sn (elimNat @p @k sn pZ pS))
+    nPlusOne -> withSomeSing (pred nPlusOne) $ \(sn :: Sing k) ->
+                  unsafeCoerce (pS sn (elimNat @p @k sn pZ pS))
 
 elimNonEmpty :: forall (a :: Type) (p :: NonEmpty a ~> Type) (n :: NonEmpty a).
                 Sing n
