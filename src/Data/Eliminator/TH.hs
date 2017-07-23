@@ -18,6 +18,7 @@ module Data.Eliminator.TH (
   ) where
 
 import           Control.Applicative
+import           Control.Monad
 
 import           Data.Char (isUpper)
 import           Data.Foldable
@@ -66,9 +67,16 @@ deriveElim dataName = deriveElimNamed (eliminatorName dataName) dataName
 deriveElimNamed :: String -> Name -> Q [Dec]
 deriveElimNamed funName dataName = do
   info@(DatatypeInfo { datatypeVars    = vars
-                     , datatypeVariant = _ -- TODO: Reject data family instances
+                     , datatypeVariant = variant
                      , datatypeCons    = cons
                      }) <- reifyDatatype dataName
+  let noDataFamilies =
+        fail "Eliminators for data family instances are currently not supported"
+  case variant of
+    DataInstance    -> noDataFamilies
+    NewtypeInstance -> noDataFamilies
+    Datatype        -> pure ()
+    Newtype         -> pure ()
   predVar <- newName "p"
   singVar <- newName "s"
   let elimN = mkName funName
@@ -98,10 +106,16 @@ deriveElimNamed funName dataName = do
 
 caseType :: Name -> Name -> ConstructorInfo -> Q Type
 caseType dataName predVar
-         (ConstructorInfo { constructorName   = conName
-                          , constructorVars   = _ -- TODO: Reject GADTs
-                          , constructorFields = fieldTypes })
-  = do vars <- newNameList "f" $ length fieldTypes
+         (ConstructorInfo { constructorName    = conName
+                          , constructorVars    = conVars
+                          , constructorContext = conContext
+                          , constructorFields  = fieldTypes })
+  = do unless (null conVars && null conContext) $
+         fail $ unlines
+           [ "Eliminators for GADTs or datatypes with existentially quantified"
+           , "data constructors currently not supported"
+           ]
+       vars <- newNameList "f" $ length fieldTypes
        let returnType = predType predVar
                                  (foldl' AppT (ConT conName) (map VarT vars))
            mbInductiveType var varType =
