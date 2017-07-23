@@ -1,16 +1,17 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 module PeanoTypes where
 
+import Data.Eliminator.TH
 import Data.Kind
 import Data.Singletons.TH
 
@@ -27,14 +28,7 @@ $(singletons [d|
   times Z     _ = Z
   times (S k) m = plus m (times k m)
   |])
-
-elimPeano :: forall (n :: Peano) (p :: Peano ~> Type).
-             Sing n
-          -> p @@ Z
-          -> (forall (k :: Peano). Sing k -> p @@ k -> p @@ (S k))
-          -> p @@ n
-elimPeano SZ pZ _ = pZ
-elimPeano (SS (sk :: Sing k)) pZ pS = pS sk (elimPeano @k @p sk pZ pS)
+$(deriveElim ''Peano)
 
 data Vec a (n :: Peano) where
   VNil :: Vec a Z
