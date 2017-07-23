@@ -67,68 +67,68 @@ There are some important things to note here:
 * There is a convention for the order in which the arguments appear.
   The quantified type variables appear in this order:
 
-  1. First, the type variables of the data type itself (@a@, in the above example).
+    1. First, the type variables of the data type itself (@a@, in the above example).
 
-  2. Second, a predicate type variable of kind @\<Datatype\> '~>' 'Type'@
-     (@p@, in the above example).
+    2. Second, a predicate type variable of kind @\<Datatype\> '~>' 'Type'@
+       (@p@, in the above example).
 
-  3. Finally, a type variable of kind @\<Datatype\>@ (@l@, in the above example).
+    3. Finally, a type variable of kind @\<Datatype\>@ (@l@, in the above example).
 
   The function arguments appear in this order:
 
-  1. First, a 'Sing' argument (@'Sing' l@, in the above example).
+    1. First, a 'Sing' argument (@'Sing' l@, in the above example).
 
-  2. Next, there are arguments that correspond to each constructor. More on this
-     in a second.
+    2. Next, there are arguments that correspond to each constructor. More on this
+       in a second.
 
   The return type is the predicate type variable applied to the data type
   (@p '@@' (MyCons x xs)@, the above example).
 
   The type of each constructor argument also follows certain conventions:
 
-  1. For each field, there will be a rank-2 type variable whose kind matches
-     the type of the field, followed by a matching 'Sing' type. For instance,
-     in the above example, @forall (x :: a). 'Sing' x@ corresponds to the
-     first field of @MyCons@.
+    1. For each field, there will be a rank-2 type variable whose kind matches
+       the type of the field, followed by a matching 'Sing' type. For instance,
+       in the above example, @forall (x :: a). 'Sing' x@ corresponds to the
+       first field of @MyCons@.
 
-  2. In addition, if the field is a recursive occurrence of the data type,
-     an additional argument will follow the 'Sing' type. This is best
-     explained using the above example. In the @MyCons@ constructor, the second
-     field (of type @MyCons a@) is a recursive occurrence of @MyCons@, so
-     that corresponds to the type
-     @forall (xs :: MyList a). 'Sing' xs -> p '@@' xs@, where @p '@@' xs@
-     is only present due to the recursion.
+    2. In addition, if the field is a recursive occurrence of the data type,
+       an additional argument will follow the 'Sing' type. This is best
+       explained using the above example. In the @MyCons@ constructor, the second
+       field (of type @MyCons a@) is a recursive occurrence of @MyCons@, so
+       that corresponds to the type
+       @forall (xs :: MyList a). 'Sing' xs -> p '@@' xs@, where @p '@@' xs@
+       is only present due to the recursion.
 
-  3. Finally, the return type will be the predicate type variable applied
-     to a saturated occurrence of the data constructor
-     (@p '@@' (MyCons x xs)@, in the above example).
+    3. Finally, the return type will be the predicate type variable applied
+       to a saturated occurrence of the data constructor
+       (@p '@@' (MyCons x xs)@, in the above example).
 
 * You'll need to enable lots of GHC extensions in order for the code generated
   by 'deriveElim' to typecheck. You'll need at least the following:
 
-  * @AllowAmbiguousTypes@
+    * @AllowAmbiguousTypes@
 
-  * @GADTs@
+    * @GADTs@
 
-  * @ScopedTypeVariables@
+    * @RankNTypes@
 
-  * @TemplateHaskell@
+    * @ScopedTypeVariables@
 
-  * @RankNTypes@
+    * @TemplateHaskell@
 
-  * @TypeApplications@
+    * @TypeApplications@
 
-  * @TypeInType@
+    * @TypeInType@
 
 * 'deriveElim' doesn't support every possible data type at the moment.
   It is known not to work for the following:
 
-  * Data types defined using @GADTs@ or @ExistentialQuantification@
+    * Data types defined using @GADTs@ or @ExistentialQuantification@
 
-  * Data family instances
+    * Data family instances
 
-  * Data types which use polymorphic recursion
-    (e.g., @data Foo a = Foo (Foo a)@)
+    * Data types which use polymorphic recursion
+      (e.g., @data Foo a = Foo (Foo a)@)
 -}
 
 -- | @'deriveElim' dataName@ generates a top-level elimination function for the
