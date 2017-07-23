@@ -1,4 +1,4 @@
-## next [????.??.??]
+## 0.2 [2017-07-22]
 * Introduce the `Data.Eliminator.TH` module, which provides functionality for
   generating eliminator functions using Template Haskell. Currently, only
   simple algebraic data types that do not use polymorphic recursion are
