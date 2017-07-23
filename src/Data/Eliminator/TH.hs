@@ -32,22 +32,103 @@ import           Language.Haskell.TH.Datatype
 import           Language.Haskell.TH.Desugar (tupleNameDegree_maybe, unboxedTupleNameDegree_maybe)
 
 {- $conventions
-TODO: snappy intro
+'deriveElim' and 'deriveElimNamed' provide a way to automate the creation of
+eliminator functions, which are mostly boilerplate. Here is a complete example
+showing how one might use 'deriveElim':
 
-The naming conventions are:
+@
+$('singletons' [d| data MyList a = MyNil | MyCons a (MyList a) |])
+$('deriveElim' ''MyList)
+@
 
-* If the datatype has an alphanumeric name, its eliminator will have that name
-  with @elim-@ prepended.
+This will produce an eliminator function that looks roughly like the following:
 
-* If the datatype has a symbolic name, its eliminator will have that name
-  with @~>@ prepended.
+@
+elimMyList :: forall (a :: 'Type') (p :: MyList a '~>' 'Type') (l :: MyList a).
+              'Sing' l
+           -> p '@@' MyNil
+           -> (forall (x :: a). 'Sing' x
+                -> forall (xs :: MyList a). 'Sing' xs -> p '@@' xs
+                -> p '@@' (MyCons x xs))
+           -> p '@@' l
+elimMyList SMyNil pMyNil _ = pMyNil
+elimMyList (SMyCons (x' :: 'Sing' x) (xs' :: 'Sing' xs)) pMyNil pMyCons
+  = pMyCons x' xs' (elimMyList @a @p @xs pMyNil pMyCons)
+@
 
-TODO: Conventions for order of arguments
+There are some important things to note here:
 
-TODO: The boatloads of extensions you'll need to use this
+* Because these eliminators use 'Sing' under the hood, in order for
+  'deriveElim' to work, the 'Sing' instance for the data type given as an
+  argument must be in scope. Moreover, 'deriveElim' assumes the naming
+  conventions for singled constructors used by the @singletons@ library.
+  (This is why the 'singletons' function is used in the example above).
 
-TODO: Restrictions (can't use data families, GADTs, or polymorphic recursion,
-must have Sing instance, etc.)
+* There is a convention for the order in which the arguments appear.
+  The quantified type variables appear in this order:
+
+  1. First, the type variables of the data type itself (@a@, in the above example).
+
+  2. Second, a predicate type variable of kind @\<Datatype\> '~>' 'Type'@
+     (@p@, in the above example).
+
+  3. Finally, a type variable of kind @\<Datatype\>@ (@l@, in the above example).
+
+  The function arguments appear in this order:
+
+  1. First, a 'Sing' argument (@'Sing' l@, in the above example).
+
+  2. Next, there are arguments that correspond to each constructor. More on this
+     in a second.
+
+  The return type is the predicate type variable applied to the data type
+  (@p '@@' (MyCons x xs)@, the above example).
+
+  The type of each constructor argument also follows certain conventions:
+
+  1. For each field, there will be a rank-2 type variable whose kind matches
+     the type of the field, followed by a matching 'Sing' type. For instance,
+     in the above example, @forall (x :: a). 'Sing' x@ corresponds to the
+     first field of @MyCons@.
+
+  2. In addition, if the field is a recursive occurrence of the data type,
+     an additional argument will follow the 'Sing' type. This is best
+     explained using the above example. In the @MyCons@ constructor, the second
+     field (of type @MyCons a@) is a recursive occurrence of @MyCons@, so
+     that corresponds to the type
+     @forall (xs :: MyList a). 'Sing' xs -> p '@@' xs@, where @p '@@' xs@
+     is only present due to the recursion.
+
+  3. Finally, the return type will be the predicate type variable applied
+     to a saturated occurrence of the data constructor
+     (@p '@@' (MyCons x xs)@, in the above example).
+
+* You'll need to enable lots of GHC extensions in order for the code generated
+  by 'deriveElim' to typecheck. You'll need at least the following:
+
+  * @AllowAmbiguousTypes@
+
+  * @GADTs@
+
+  * @ScopedTypeVariables@
+
+  * @TemplateHaskell@
+
+  * @RankNTypes@
+
+  * @TypeApplications@
+
+  * @TypeInType@
+
+* 'deriveElim' doesn't support every possible data type at the moment.
+  It is known not to work for the following:
+
+  * Data types defined using @GADTs@ or @ExistentialQuantification@
+
+  * Data family instances
+
+  * Data types which use polymorphic recursion
+    (e.g., @data Foo a = Foo (Foo a)@)
 -}
 
 -- | @'deriveElim' dataName@ generates a top-level elimination function for the
