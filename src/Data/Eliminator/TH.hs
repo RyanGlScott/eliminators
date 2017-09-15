@@ -53,7 +53,7 @@ elimMyList :: forall (a :: 'Type') (p :: MyList a '~>' 'Type') (l :: MyList a).
            -> p '@@' l
 elimMyList SMyNil pMyNil _ = pMyNil
 elimMyList (SMyCons (x' :: 'Sing' x) (xs' :: 'Sing' xs)) pMyNil pMyCons
-  = pMyCons x' xs' (elimMyList @a @p @xs pMyNil pMyCons)
+  = pMyCons x' xs' (elimMyList \@a \@p \@xs pMyNil pMyCons)
 @
 
 There are some important things to note here:
