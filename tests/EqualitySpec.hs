@@ -43,7 +43,9 @@ instance SingKind (a :~: b) where
 instance SingI Refl where
   sing = SRefl
 
-(~>:~:) :: forall (k :: Type) (a :: k) (b :: k) (r :: a :~: b) (p :: forall (y :: k). a :~: y ~> Type).
+(~>:~:) :: forall (k :: Type) (a :: k) (b :: k)
+                  (p :: forall (y :: k). a :~: y ~> Type)
+                  (r :: a :~: b).
            Sing r
         -> p @@ Refl
         -> p @@ r
@@ -61,7 +63,9 @@ instance SingKind (a :~~: b) where
 instance SingI HRefl where
   sing = SHRefl
 
-(~>:~~:) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (r :: a :~~: b) (p :: forall (z :: Type) (y :: z). a :~~: y ~> Type).
+(~>:~~:) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
+                   (p :: forall (z :: Type) (y :: z). a :~~: y ~> Type)
+                   (r :: a :~~: b).
             Sing r
          -> p @@ HRefl
          -> p @@ r
@@ -77,7 +81,7 @@ type instance Apply (WhySymSym a :: a :~: y ~> Type) x
 sym :: forall (t :: Type) (a :: t) (b :: t).
        a :~: b -> b :~: a
 sym eq = withSomeSing eq $ \(singEq :: Sing r) ->
-           (~>:~:) @t @a @b @r @(WhySymSym a) singEq Refl
+           (~>:~:) @t @a @b @(WhySymSym a) @r singEq Refl
 
 type WhyHsym (a :: j) (y :: z) (e :: a :~~: y) = y :~~: a
 data WhyHsymSym (a :: j) :: forall (z :: Type) (y :: z). a :~~: y ~> Type
@@ -87,7 +91,7 @@ type instance Apply (WhyHsymSym a :: a :~~: y ~> Type) x
 hsym :: forall (j :: Type) (k :: Type) (a :: j) (b :: k).
         a :~~: b -> b :~~: a
 hsym eq = withSomeSing eq $ \(singEq :: Sing r) ->
-            (~>:~~:) @j @k @a @b @r @(WhyHsymSym a) singEq HRefl
+            (~>:~~:) @j @k @a @b @(WhyHsymSym a) @r singEq HRefl
 
 type family Symmetry (x :: (a :: k) :~: (b :: k)) :: b :~: a where
   Symmetry Refl = Refl
@@ -101,7 +105,7 @@ type instance Apply (WhySymIdempotentSym a :: a :~: z ~> Type) r
 symIdempotent :: forall (t :: Type) (a :: t) (b :: t)
                         (e :: a :~: b).
                  Sing e -> Symmetry (Symmetry e) :~: e
-symIdempotent se = (~>:~:) @t @a @b @e @(WhySymIdempotentSym a) se Refl
+symIdempotent se = (~>:~:) @t @a @b @(WhySymIdempotentSym a) @e se Refl
 
 type family Hsymmetry (x :: (a :: j) :~~: (b :: k)) :: b :~~: a where
   Hsymmetry HRefl = HRefl
@@ -115,7 +119,7 @@ type instance Apply (WhyHsymIdempotentSym a :: a :~~: y ~> Type) r
 hsymIdempotent :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
                          (e :: a :~~: b).
                   Sing e -> Hsymmetry (Hsymmetry e) :~: e
-hsymIdempotent se = (~>:~~:) @j @k @a @b @e @(WhyHsymIdempotentSym a) se Refl
+hsymIdempotent se = (~>:~~:) @j @k @a @b @(WhyHsymIdempotentSym a) @e se Refl
 
 type WhyReplace (from :: t) (p :: t ~> Type)
                 (y :: t) (e :: from :~: y) = p @@ y
@@ -130,7 +134,7 @@ replace :: forall (t :: Type) (from :: t) (to :: t) (p :: t ~> Type).
         -> p @@ to
 replace from eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
-    (~>:~:) @t @from @to @r @(WhyReplaceSym from p) singEq from
+    (~>:~:) @t @from @to @(WhyReplaceSym from p) @r singEq from
 
 {-
 type WhyHreplace (from :: j) (p :: forall (z :: Type). z ~> Type)
@@ -175,4 +179,4 @@ cong :: forall (x :: Type) (y :: Type) (f :: x ~> y)
      -> f @@ a :~: f @@ b
 cong eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
-    (~>:~:) @x @a @b @r @(WhyCongSym x y f a) singEq Refl
+    (~>:~:) @x @a @b @(WhyCongSym x y f a) @r singEq Refl
