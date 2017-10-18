@@ -38,7 +38,9 @@ library
 test-suite spec
   type:                exitcode-stdio-1.0
   main-is:             Spec.hs
-  other-modules:       EqualitySpec
+  other-modules:       DecideSpec
+                       DecideTypes
+                       EqualitySpec
                        GADTSpec
                        ListSpec
                        ListTypes
