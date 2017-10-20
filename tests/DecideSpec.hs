@@ -81,7 +81,7 @@ decEqZ sj = elimPeano @WhyDecEqZSym0 @j sj base step
 
 decCongS :: forall n j. Sing n -> Decision (n :~: j) -> Decision (S n :~: S j)
 decCongS sn dNJ = withSomeSing dNJ $ \(sDNJ :: Sing d) ->
-                    elimDecision @_ @_ @(ConstSym1 (Decision (S n :~: S j))) @d
+                    elimDecision @_ @(ConstSym1 (Decision (S n :~: S j))) @d
                       sDNJ left right
   where
     left :: forall (x :: n :~: j).
@@ -169,13 +169,13 @@ decCongCons :: forall (x :: e) (xs :: [e]) (y :: e) (ys :: [e]).
             -> Decision ((x:xs) :~: (y:ys))
 decCongCons sx sxs dXY dXsYs =
   withSomeSing dXY $ \(sDXY :: Sing dXY) ->
-    elimDecision @_ @_ @(ConstSym1 (Decision ((x:xs) :~: (y:ys)))) @dXY
+    elimDecision @_ @(ConstSym1 (Decision ((x:xs) :~: (y:ys)))) @dXY
       sDXY left right
   where
     left :: forall (z :: x :~: y).
             Sing z -> Decision ((x:xs) :~: (y:ys))
     left xEqY = withSomeSing dXsYs $ \(sDXsYs :: Sing dXsYs) ->
-                  elimDecision @_ @_ @(ConstSym1 (Decision ((x:xs) :~: (y:ys)))) @dXsYs
+                  elimDecision @_ @(ConstSym1 (Decision ((x:xs) :~: (y:ys)))) @dXsYs
                     sDXsYs leftLeft leftRight
       where
         leftLeft :: forall (zz :: xs :~: ys).

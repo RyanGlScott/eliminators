@@ -13,7 +13,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 module DecideTypes where
 
-import Data.Eliminator.TH
 import Data.Kind
 import Data.Singletons.TH hiding (Decision(..))
 
@@ -29,7 +28,15 @@ $(genDefunSymbols [''(~>)])
 data Decision' p a
   = Proved a
   | Disproved (p @@ a @@ Void)
-$(deriveElimNamed "elimDecision" ''Decision')
+
+elimDecision :: forall (a :: Type) (p :: PDecision a ~> Type) (d :: PDecision a).
+                Sing d
+             -> (forall (yes :: a). Sing yes -> p @@ (Proved yes))
+             -> (forall (no :: a ~> Void). Sing no -> p @@ (Disproved no))
+             -> p @@ d
+elimDecision (SProved yes)   pProved _          = pProved yes
+elimDecision (SDisproved no) _       pDisproved = pDisproved no
+
 instance Show a => Show (Decision' p a) where
   showsPrec p (Proved a) =
     showParen (p > 10) $ showString "Proved " . showsPrec 11 a
@@ -39,8 +46,11 @@ instance Show a => Show (Decision' p a) where
 type Decision  = Decision' (TyCon2 (->))
 type PDecision = Decision' (:~>$)
 
-data instance Sing (z :: Decision' p a) where
-  SProved    :: forall (x :: a).         Sing x -> Sing (Proved x)
+data instance Sing (z :: PDecision a) where
+  -- It would be lovely to not have to write those (:: PDecision a) kind
+  -- ascriptions in the return types of each constructor.
+  -- See https://ghc.haskell.org/trac/ghc/ticket/14111.
+  SProved    :: forall (x :: a).         Sing x -> Sing (Proved x    :: PDecision a)
   SDisproved :: forall (r :: a ~> Void). Sing r -> Sing (Disproved r :: PDecision a)
 
 instance SingKind a => SingKind (PDecision a) where
