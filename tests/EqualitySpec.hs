@@ -180,3 +180,21 @@ cong :: forall (x :: Type) (y :: Type) (f :: x ~> y)
 cong eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
     (~>:~:) @x @a @b @(WhyCongSym x y f a) @r singEq Refl
+
+type WhyEqIsRefl (a :: k) (z :: k) (e :: a :~: z)
+  = e :~~: (Refl :: a :~: a)
+data WhyEqIsReflSym (a :: k) :: forall (z :: k). a :~: z ~> Type
+type instance Apply (WhyEqIsReflSym a :: a :~: z ~> Type) e = WhyEqIsRefl a z e
+
+eqIsRefl :: forall (k :: Type) (a :: k) (b :: k) (e :: a :~: b).
+            Sing e -> e :~~: (Refl :: a :~: a)
+eqIsRefl eq = (~>:~:) @k @a @b @(WhyEqIsReflSym a) @e eq HRefl
+
+type WhyHEqIsHRefl (a :: j) (z :: k) (e :: a :~~: z)
+  = e :~~: (HRefl :: a :~~: a)
+data WhyHEqIsHReflSym (a :: j) :: forall (k :: Type) (z :: k). a :~~: z ~> Type
+type instance Apply (WhyHEqIsHReflSym a :: a :~~: z ~> Type) e = WhyHEqIsHRefl a z e
+
+heqIsHRefl :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (e :: a :~~: b).
+              Sing e -> e :~~: (HRefl :: a :~~: a)
+heqIsHRefl heq = (~>:~~:) @j @k @a @b @(WhyHEqIsHReflSym a) @e heq HRefl
