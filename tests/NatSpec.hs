@@ -20,9 +20,10 @@ spec :: Spec
 spec = parallel $ do
   describe "replicateVec" $ do
     it "works with empty lists" $
-      replicateVec SZ () `shouldBe` VNil
-    it "works with non-empty lists" $
-      replicateVec (SS SZ) () `shouldBe` () :# VNil
+      replicateVec (sLit @0) () `shouldBe` VNil
+    it "works with non-empty lists" $ do
+      replicateVec (sLit @1) () `shouldBe` () :# VNil
+      replicateVec (sLit @2) () `shouldBe` () :# () :# VNil
   describe "mapVec" $ do
     it "maps over a Vec" $ do
       mapVec reverse ("hello" :# "world" :# VNil)

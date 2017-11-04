@@ -29,19 +29,19 @@ spec = parallel $ do
       disproved = "Disproved <void>"
   describe "decEqNat" $ do
     it "returns evidence that two Nats are equal" $ do
-      show (decEqNat SZ      SZ)      `shouldBe` proved
-      show (decEqNat (SS SZ) SZ)      `shouldBe` disproved
-      show (decEqNat SZ      (SS SZ)) `shouldBe` disproved
-      show (decEqNat (SS SZ) (SS SZ)) `shouldBe` proved
+      show (decEqNat (sLit @0) (sLit @0)) `shouldBe` proved
+      show (decEqNat (sLit @1) (sLit @0)) `shouldBe` disproved
+      show (decEqNat (sLit @0) (sLit @1)) `shouldBe` disproved
+      show (decEqNat (sLit @1) (sLit @1)) `shouldBe` proved
   describe "decEqList" $ do
     it "returns evidence that two lists are equal" $ do
       let decEqNatList = decEqList decEqNat
-      show (decEqNatList SNil                 SNil)            `shouldBe` proved
-      show (decEqNatList (SCons SZ SNil)      SNil)            `shouldBe` disproved
-      show (decEqNatList SNil                 (SCons SZ SNil)) `shouldBe` disproved
-      show (decEqNatList (SCons SZ SNil)      (SCons SZ SNil)) `shouldBe` proved
+      show (decEqNatList SNil                   SNil)                   `shouldBe` proved
+      show (decEqNatList (SCons (sLit @0) SNil) SNil)                   `shouldBe` disproved
+      show (decEqNatList SNil                   (SCons (sLit @0) SNil)) `shouldBe` disproved
+      show (decEqNatList (SCons (sLit @0) SNil) (SCons (sLit @0) SNil)) `shouldBe` proved
       -- TODO: Try this in the next version of singletons
-      -- show (decEqNatList (SCons (SS SZ) SNil) (SCons SZ SNil)) `shouldBe` disproved
+      -- show (decEqNatList (SCons (sLit @1) SNil) (SCons (sLit @0) SNil)) `shouldBe` disproved
 
 -----
 
