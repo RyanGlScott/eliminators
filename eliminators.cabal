@@ -44,8 +44,7 @@ test-suite spec
                        GADTSpec
                        ListSpec
                        ListTypes
-                       NatSpec
-                       NatTypes
+                       VecTypes
                        VecSpec
   build-depends:       base           >= 4.10    && < 4.11
                      , eliminators

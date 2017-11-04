@@ -16,7 +16,7 @@ import Data.Type.Equality
 
 import EqualitySpec (cong, replace)
 import DecideTypes
-import NatTypes
+import VecTypes
 
 import Test.Hspec
 

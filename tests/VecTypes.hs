@@ -9,7 +9,7 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-module NatTypes where
+module VecTypes where
 
 import Data.Eliminator.TH
 import Data.Kind
