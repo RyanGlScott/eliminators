@@ -44,13 +44,14 @@ test-suite spec
                        GADTSpec
                        ListSpec
                        ListTypes
-                       PeanoSpec
-                       PeanoTypes
+                       NatSpec
+                       NatTypes
                        VecSpec
-  build-depends:       base       >= 4.10 && < 4.11
+  build-depends:       base           >= 4.10    && < 4.11
                      , eliminators
-                     , hspec      >= 2    && < 3
-                     , singletons >= 2.3  && < 2.4
+                     , hspec          >= 2       && < 3
+                     , singletons     >= 2.3     && < 2.4
+                     , singleton-nats >= 0.4.0.3 && < 0.5
   hs-source-dirs:      tests
   default-language:    Haskell2010
   ghc-options:         -Wall -Wno-unticked-promoted-constructors -threaded -rtsopts

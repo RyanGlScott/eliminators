@@ -8,14 +8,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 module DecideSpec where
 
-import Data.Eliminator
+import Data.Eliminator hiding (elimNat)
+import Data.Nat
 import Data.Singletons.Prelude
 import Data.Singletons.TH hiding (Decision(..))
 import Data.Type.Equality
 
 import EqualitySpec (cong, replace)
 import DecideTypes
-import PeanoTypes
+import NatTypes
 
 import Test.Hspec
 
@@ -26,56 +27,56 @@ spec :: Spec
 spec = parallel $ do
   let proved    = "Proved Refl"
       disproved = "Disproved <void>"
-  describe "decEqPeano" $ do
-    it "returns evidence that two Peanos are equal" $ do
-      show (decEqPeano SZ      SZ)      `shouldBe` proved
-      show (decEqPeano (SS SZ) SZ)      `shouldBe` disproved
-      show (decEqPeano SZ      (SS SZ)) `shouldBe` disproved
-      show (decEqPeano (SS SZ) (SS SZ)) `shouldBe` proved
+  describe "decEqNat" $ do
+    it "returns evidence that two Nats are equal" $ do
+      show (decEqNat SZ      SZ)      `shouldBe` proved
+      show (decEqNat (SS SZ) SZ)      `shouldBe` disproved
+      show (decEqNat SZ      (SS SZ)) `shouldBe` disproved
+      show (decEqNat (SS SZ) (SS SZ)) `shouldBe` proved
   describe "decEqList" $ do
     it "returns evidence that two lists are equal" $ do
-      let decEqPeanoList = decEqList decEqPeano
-      show (decEqPeanoList SNil                 SNil)            `shouldBe` proved
-      show (decEqPeanoList (SCons SZ SNil)      SNil)            `shouldBe` disproved
-      show (decEqPeanoList SNil                 (SCons SZ SNil)) `shouldBe` disproved
-      show (decEqPeanoList (SCons SZ SNil)      (SCons SZ SNil)) `shouldBe` proved
+      let decEqNatList = decEqList decEqNat
+      show (decEqNatList SNil                 SNil)            `shouldBe` proved
+      show (decEqNatList (SCons SZ SNil)      SNil)            `shouldBe` disproved
+      show (decEqNatList SNil                 (SCons SZ SNil)) `shouldBe` disproved
+      show (decEqNatList (SCons SZ SNil)      (SCons SZ SNil)) `shouldBe` proved
       -- TODO: Try this in the next version of singletons
-      -- show (decEqPeanoList (SCons (SS SZ) SNil) (SCons SZ SNil)) `shouldBe` disproved
+      -- show (decEqNatList (SCons (SS SZ) SNil) (SCons SZ SNil)) `shouldBe` disproved
 
 -----
 
-peanoEqConsequencesSame :: forall (n :: Peano). Sing n -> PeanoEqConsequences n n
-peanoEqConsequencesSame sn = elimPeano @WhyPeanoEqConsequencesSameSym0 @n sn base step
+peanoEqConsequencesSame :: forall (n :: Nat). Sing n -> NatEqConsequences n n
+peanoEqConsequencesSame sn = elimNat @WhyNatEqConsequencesSameSym0 @n sn base step
   where
-    base :: WhyPeanoEqConsequencesSame Z
+    base :: WhyNatEqConsequencesSame Z
     base = ()
 
-    step :: forall (k :: Peano).
+    step :: forall (k :: Nat).
             Sing k
-         -> WhyPeanoEqConsequencesSame k
-         -> WhyPeanoEqConsequencesSame (S k)
+         -> WhyNatEqConsequencesSame k
+         -> WhyNatEqConsequencesSame (S k)
     step _ _ = Refl
 
-usePeanoEq :: forall n j. Sing n -> n :~: j -> PeanoEqConsequences n j
-usePeanoEq sn nEqJ = replace @Peano @n @j @(PeanoEqConsequencesSym1 n)
+useNatEq :: forall n j. Sing n -> n :~: j -> NatEqConsequences n j
+useNatEq sn nEqJ = replace @Nat @n @j @(NatEqConsequencesSym1 n)
                              (peanoEqConsequencesSame @n sn) nEqJ
 
 zNotS :: forall n. Z :~: S n -> Void
-zNotS = usePeanoEq @Z @(S n) SZ
+zNotS = useNatEq @Z @(S n) SZ
 
 sNotZ :: forall n. S n :~: Z -> Void
 sNotZ eq = zNotS @n (sym eq)
 
 sInjective :: forall n j. Sing n -> S n :~: S j -> n :~: j
-sInjective sn = usePeanoEq @(S n) @(S j) (SS sn)
+sInjective sn = useNatEq @(S n) @(S j) (SS sn)
 
-decEqZ :: forall (j :: Peano). Sing j -> Decision (Z :~: j)
-decEqZ sj = elimPeano @WhyDecEqZSym0 @j sj base step
+decEqZ :: forall (j :: Nat). Sing j -> Decision (Z :~: j)
+decEqZ sj = elimNat @WhyDecEqZSym0 @j sj base step
   where
     base :: Decision (Z :~: Z)
     base = Proved Refl
 
-    step :: forall (k :: Peano).
+    step :: forall (k :: Nat).
             Sing k -> Decision (Z :~: k) -> Decision (Z :~: S k)
     step _ _ = Disproved (zNotS @k)
 
@@ -86,33 +87,33 @@ decCongS sn dNJ = withSomeSing dNJ $ \(sDNJ :: Sing d) ->
   where
     left :: forall (x :: n :~: j).
             Sing x -> Decision (S n :~: S j)
-    left yes = Proved $ cong @Peano @Peano @(TyCon1 S) @n @j (fromSing yes)
+    left yes = Proved $ cong @Nat @Nat @(TyCon1 S) @n @j (fromSing yes)
 
     right :: forall (r :: (n :~: j) ~> Void).
              Sing r -> Decision (S n :~: S j)
     right no = Disproved $ fromSing no . sInjective @n @j sn
 
-decEqPeano :: forall (n :: Peano) (j :: Peano). Sing n -> Sing j -> Decision (n :~: j)
-decEqPeano sn = runWhyDecEqPeano (elimPeano @(TyCon1 WhyDecEqPeano) @n sn base step)
+decEqNat :: forall (n :: Nat) (j :: Nat). Sing n -> Sing j -> Decision (n :~: j)
+decEqNat sn = runWhyDecEqNat (elimNat @(TyCon1 WhyDecEqNat) @n sn base step)
   where
-    base :: WhyDecEqPeano Z
-    base = WhyDecEqPeano decEqZ
+    base :: WhyDecEqNat Z
+    base = WhyDecEqNat decEqZ
 
-    step :: forall (k :: Peano).
+    step :: forall (k :: Nat).
             Sing k
-         -> WhyDecEqPeano k
-         -> WhyDecEqPeano (S k)
-    step sk swhyK = WhyDecEqPeano $ \(sl :: Sing l) ->
-                      elimPeano @(WhyDecEqSSym1 k) @l sl baseStep stepStep
+         -> WhyDecEqNat k
+         -> WhyDecEqNat (S k)
+    step sk swhyK = WhyDecEqNat $ \(sl :: Sing l) ->
+                      elimNat @(WhyDecEqSSym1 k) @l sl baseStep stepStep
       where
         baseStep :: Decision (S k :~: Z)
         baseStep = Disproved $ sNotZ @k
 
-        stepStep :: forall (m :: Peano).
+        stepStep :: forall (m :: Nat).
                     Sing m
                  -> Decision (S k :~: m)
                  -> Decision (S k :~: S m)
-        stepStep sm _ = decCongS sk (runWhyDecEqPeano swhyK sm)
+        stepStep sm _ = decCongS sk (runWhyDecEqNat swhyK sm)
 
 listEqConsequencesSame :: forall (es :: [e]). Sing es -> ListEqConsequences es es
 listEqConsequencesSame sl = elimList @e @WhyListEqConsequencesSameSym0 @es sl base step

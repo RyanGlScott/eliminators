@@ -2,12 +2,14 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
-module PeanoSpec where
+module NatSpec where
 
 import Data.Kind
+import Data.Nat
 import Data.Singletons
+import Data.Singletons.Prelude.Num
 
-import PeanoTypes
+import NatTypes
 
 import Test.Hspec
 
@@ -55,62 +57,62 @@ spec = parallel $ do
 
 -----
 
-replicateVec :: forall (e :: Type) (howMany :: Peano).
+replicateVec :: forall (e :: Type) (howMany :: Nat).
                 Sing howMany -> e -> Vec e howMany
-replicateVec s e = elimPeano @(TyCon1 (Vec e)) @howMany s VNil step
+replicateVec s e = elimNat @(TyCon1 (Vec e)) @howMany s VNil step
   where
-    step :: forall (k :: Peano). Sing k -> Vec e k -> Vec e (S k)
+    step :: forall (k :: Nat). Sing k -> Vec e k -> Vec e (S k)
     step _ = (e :#)
 
-mapVec :: forall (a :: Type) (b :: Type) (n :: Peano).
+mapVec :: forall (a :: Type) (b :: Type) (n :: Nat).
           SingI n
        => (a -> b) -> Vec a n -> Vec b n
-mapVec f = elimPeano @(WhyMapVecSym2 a b) @n (sing @_ @n) base step
+mapVec f = elimNat @(WhyMapVecSym2 a b) @n (sing @_ @n) base step
   where
     base :: WhyMapVec a b Z
     base _ = VNil
 
-    step :: forall (k :: Peano). Sing k -> WhyMapVec a b k -> WhyMapVec a b (S k)
+    step :: forall (k :: Nat). Sing k -> WhyMapVec a b k -> WhyMapVec a b (S k)
     step _ mapK vK = f (vhead vK) :# mapK (vtail vK)
 
-zipWithVec :: forall (a :: Type) (b :: Type) (c :: Type) (n :: Peano).
+zipWithVec :: forall (a :: Type) (b :: Type) (c :: Type) (n :: Nat).
               SingI n
            => (a -> b -> c) -> Vec a n -> Vec b n -> Vec c n
-zipWithVec f = elimPeano @(WhyZipWithVecSym3 a b c) @n (sing @_ @n) base step
+zipWithVec f = elimNat @(WhyZipWithVecSym3 a b c) @n (sing @_ @n) base step
   where
     base :: WhyZipWithVec a b c Z
     base _ _ = VNil
 
-    step :: forall (k :: Peano).
+    step :: forall (k :: Nat).
             Sing k
          -> WhyZipWithVec a b c k
          -> WhyZipWithVec a b c (S k)
     step _ zwK vaK vbK = f   (vhead vaK) (vhead vbK)
                       :# zwK (vtail vaK) (vtail vbK)
 
-appendVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
+appendVec :: forall (e :: Type) (n :: Nat) (m :: Nat).
              SingI n
-          => Vec e n -> Vec e m -> Vec e (n `Plus` m)
-appendVec = elimPeano @(WhyAppendVecSym2 e m) @n (sing @_ @n) base step
+          => Vec e n -> Vec e m -> Vec e (n :+ m)
+appendVec = elimNat @(WhyAppendVecSym2 e m) @n (sing @_ @n) base step
   where
     base :: WhyAppendVec e m Z
     base _ = id
 
-    step :: forall (k :: Peano).
+    step :: forall (k :: Nat).
             Sing k
          -> WhyAppendVec e m k
          -> WhyAppendVec e m (S k)
     step _ avK vK1 vK2 = vhead vK1 :# avK (vtail vK1) vK2
 
-transposeVec :: forall (e :: Type) (n :: Peano) (m :: Peano).
+transposeVec :: forall (e :: Type) (n :: Nat) (m :: Nat).
                 (SingI n, SingI m)
              => Vec (Vec e m) n -> Vec (Vec e n) m
-transposeVec = elimPeano @(WhyTransposeVecSym2 e m) @n (sing @_ @n) base step
+transposeVec = elimNat @(WhyTransposeVecSym2 e m) @n (sing @_ @n) base step
   where
     base :: WhyTransposeVec e m Z
     base _ = replicateVec (sing @_ @m) VNil
 
-    step :: forall (k :: Peano).
+    step :: forall (k :: Nat).
             Sing k
          -> WhyTransposeVec e m k
          -> WhyTransposeVec e m (S k)

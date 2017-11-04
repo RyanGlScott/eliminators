@@ -9,28 +9,17 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-module PeanoTypes where
+module NatTypes where
 
 import Data.Eliminator.TH
 import Data.Kind
+import Data.Nat
+import Data.Singletons.Prelude.Num
 import Data.Singletons.TH
 
-$(singletons [d|
-  data Peano = Z | S Peano
+$(deriveElim ''Nat)
 
-  infixl 6 `plus`
-  plus :: Peano -> Peano -> Peano
-  plus Z     m = m
-  plus (S k) m = S (plus k m)
-
-  infixl 7 `times`
-  times :: Peano -> Peano -> Peano
-  times Z     _ = Z
-  times (S k) m = plus m (times k m)
-  |])
-$(deriveElim ''Peano)
-
-data Vec a (n :: Peano) where
+data Vec :: Type -> Nat -> Type where
   VNil :: Vec a Z
   (:#) :: { vhead :: a, vtail :: Vec a n } -> Vec a (S n)
 infixr 5 :#
@@ -60,35 +49,35 @@ instance SingI VNil where
 instance (SingI x, SingI xs) => SingI (x :# xs) where
   sing = sing :%# sing
 
-elimVec :: forall (a :: Type) (n :: Peano)
-                  (p :: forall (k :: Peano). Vec a k ~> Type) (v :: Vec a n).
+elimVec :: forall (a :: Type) (n :: Nat)
+                  (p :: forall (k :: Nat). Vec a k ~> Type) (v :: Vec a n).
            Sing v
         -> p @@ VNil
-        -> (forall (k :: Peano) (x :: a) (xs :: Vec a k).
+        -> (forall (k :: Nat) (x :: a) (xs :: Vec a k).
                    Sing x -> Sing xs -> p @@ xs -> p @@ (x :# xs))
         -> p @@ v
 elimVec SVNil pVNil _ = pVNil
 elimVec (sx :%# (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
   pVCons sx sxs (elimVec @a @k @p @xs sxs pVNil pVCons)
 
-type WhyMapVec (a :: Type) (b :: Type) (n :: Peano) = Vec a n -> Vec b n
+type WhyMapVec (a :: Type) (b :: Type) (n :: Nat) = Vec a n -> Vec b n
 $(genDefunSymbols [''WhyMapVec])
 
-type WhyZipWithVec (a :: Type) (b :: Type) (c :: Type) (n :: Peano)
+type WhyZipWithVec (a :: Type) (b :: Type) (c :: Type) (n :: Nat)
   = Vec a n -> Vec b n -> Vec c n
 $(genDefunSymbols [''WhyZipWithVec])
 
-type WhyAppendVec (e :: Type) (m :: Peano) (n :: Peano)
-  = Vec e n -> Vec e m -> Vec e (n `Plus` m)
+type WhyAppendVec (e :: Type) (m :: Nat) (n :: Nat)
+  = Vec e n -> Vec e m -> Vec e (n :+ m)
 $(genDefunSymbols [''WhyAppendVec])
 
-type WhyTransposeVec (e :: Type) (m :: Peano) (n :: Peano)
+type WhyTransposeVec (e :: Type) (m :: Nat) (n :: Nat)
   = Vec (Vec e m) n -> Vec (Vec e n) m
 $(genDefunSymbols [''WhyTransposeVec])
 
-type WhyConcatVec (e :: Type) (j :: Peano) (n :: Peano) (l :: Vec (Vec e j) n)
-  = Vec e (n `Times` j)
-data WhyConcatVecSym (e :: Type) (j :: Peano)
-  :: forall (n :: Peano). Vec (Vec e j) n ~> Type
+type WhyConcatVec (e :: Type) (j :: Nat) (n :: Nat) (l :: Vec (Vec e j) n)
+  = Vec e (n :* j)
+data WhyConcatVecSym (e :: Type) (j :: Nat)
+  :: forall (n :: Nat). Vec (Vec e j) n ~> Type
 type instance Apply (WhyConcatVecSym e j :: Vec (Vec e j) n ~> Type) l
   = WhyConcatVec e j n l

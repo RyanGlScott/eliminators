@@ -14,9 +14,8 @@
 module DecideTypes where
 
 import Data.Kind
+import Data.Nat
 import Data.Singletons.TH hiding (Decision(..))
-
-import PeanoTypes
 
 -- TODO: Remove these in the next version of singletons
 $(genSingletons [''Void])
@@ -60,26 +59,26 @@ instance SingKind a => SingKind (PDecision a) where
   toSing (Proved x)    = withSomeSing x $ SomeSing . SProved
   toSing (Disproved r) = withSomeSing r $ SomeSing . SDisproved
 
-type family PeanoEqConsequences (a :: Peano) (b :: Peano) :: Type where
-  PeanoEqConsequences Z      Z      = ()
-  PeanoEqConsequences Z      (S _)  = Void
-  PeanoEqConsequences (S _)  Z      = Void
-  PeanoEqConsequences (S k1) (S k2) = k1 :~: k2
-$(genDefunSymbols [''PeanoEqConsequences])
+type family NatEqConsequences (a :: Nat) (b :: Nat) :: Type where
+  NatEqConsequences Z      Z      = ()
+  NatEqConsequences Z      (S _)  = Void
+  NatEqConsequences (S _)  Z      = Void
+  NatEqConsequences (S k1) (S k2) = k1 :~: k2
+$(genDefunSymbols [''NatEqConsequences])
 
-type WhyPeanoEqConsequencesSame (a :: Peano) = PeanoEqConsequences a a
-$(genDefunSymbols [''WhyPeanoEqConsequencesSame])
+type WhyNatEqConsequencesSame (a :: Nat) = NatEqConsequences a a
+$(genDefunSymbols [''WhyNatEqConsequencesSame])
 
-type WhyDecEqZ (k :: Peano) = Decision (Z :~: k)
+type WhyDecEqZ (k :: Nat) = Decision (Z :~: k)
 $(genDefunSymbols [''WhyDecEqZ])
 
-type WhyDecEqS (n :: Peano) (k :: Peano) = Decision (S n :~: k)
+type WhyDecEqS (n :: Nat) (k :: Nat) = Decision (S n :~: k)
 $(genDefunSymbols [''WhyDecEqS])
 
 -- The newtype wrapper is needed to work around
 -- https://github.com/goldfirere/singletons/issues/198
-newtype WhyDecEqPeano (k :: Peano) = WhyDecEqPeano
-  { runWhyDecEqPeano :: forall (j :: Peano). Sing j -> Decision (k :~: j) }
+newtype WhyDecEqNat (k :: Nat) = WhyDecEqNat
+  { runWhyDecEqNat :: forall (j :: Nat). Sing j -> Decision (k :~: j) }
 
 type family ListEqConsequences (xxs :: [e]) (yys :: [e]) :: Type where
   ListEqConsequences '[]    '[]    = ()

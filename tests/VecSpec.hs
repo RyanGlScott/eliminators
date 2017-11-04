@@ -6,10 +6,12 @@
 module VecSpec where
 
 import Data.Kind
+import Data.Nat
 import Data.Singletons
+import Data.Singletons.Prelude.Num
 
-import PeanoSpec (appendVec)
-import PeanoTypes
+import NatSpec (appendVec)
+import NatTypes
 
 import Test.Hspec
 
@@ -28,16 +30,16 @@ spec = parallel $ do
 
 -----
 
-concatVec :: forall (e :: Type) (n :: Peano) (j :: Peano).
+concatVec :: forall (e :: Type) (n :: Nat) (j :: Nat).
              (SingKind e, SingI j, e ~ Demote e)
-          => Vec (Vec e j) n -> Vec e (n `Times` j)
+          => Vec (Vec e j) n -> Vec e (n :* j)
 concatVec l = withSomeSing l $ \(singL :: Sing l) ->
                 elimVec @(Vec e j) @n @(WhyConcatVecSym e j) @l singL base step
   where
     base :: WhyConcatVec e j Z VNil
     base = VNil
 
-    step :: forall (k :: Peano) (x :: Vec e j) (xs :: Vec (Vec e j) k).
+    step :: forall (k :: Nat) (x :: Vec e j) (xs :: Vec (Vec e j) k).
                    Sing x -> Sing xs
                 -> WhyConcatVec e j k     xs
                 -> WhyConcatVec e j (S k) (x :# xs)
