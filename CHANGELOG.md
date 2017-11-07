@@ -1,4 +1,4 @@
-## next [????-??-??]
+## 0.3 [2017-11-07]
 * Migrate the old `elimNat` from `Data.Eliminator` (which worked over the `Nat`
   from `GHC.TypeNats`) to `Data.Eliminator.TypeNats`. There `elimNat` that now
   lives in `Data.Eliminator` is for an unrelated `Nat` data type from the
