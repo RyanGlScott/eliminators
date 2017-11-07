@@ -39,20 +39,15 @@ module Data.Eliminator (
   , elimTuple7
   ) where
 
-import           Control.Monad.Extra
+import Control.Monad.Extra
 
-import           Data.Eliminator.TH
-import           Data.Kind (Type)
-import           Data.List.NonEmpty (NonEmpty(..))
-import           Data.Singletons.Prelude
-import           Data.Singletons.Prelude.List.NonEmpty (Sing(..))
-import           Data.Singletons.TypeLits
+import Data.Eliminator.TH
+import Data.List.NonEmpty (NonEmpty(..))
+import Data.Nat
+import Data.Singletons.Prelude
+import Data.Singletons.Prelude.List.NonEmpty (Sing(..))
 
-import qualified GHC.TypeLits as TL
-
-import           Language.Haskell.TH.Desugar (tupleNameDegree_maybe)
-
-import           Unsafe.Coerce (unsafeCoerce)
+import Language.Haskell.TH.Desugar (tupleNameDegree_maybe)
 
 {- $eliminators
 
@@ -70,23 +65,8 @@ The naming conventions are:
   with @~>@ prepended.
 -}
 
-$(concatMapM deriveElim [''Bool, ''Either, ''Maybe, ''NonEmpty, ''Ordering])
+$(concatMapM deriveElim [''Bool, ''Either, ''Maybe, ''Nat, ''NonEmpty, ''Ordering])
 $(deriveElimNamed "elimList" ''[])
 $(concatMapM (\n -> let Just deg = tupleNameDegree_maybe n
                     in deriveElimNamed ("elimTuple" ++ show deg) n)
              [''(), ''(,), ''(,,), ''(,,,), ''(,,,,), ''(,,,,,), ''(,,,,,,)])
-
--- This is the grimy one we can't define using Template Haskell.
-
--- | Although 'Nat' is not actually an inductive data type in GHC, we can
--- pretend that it is using this eliminator.
-elimNat :: forall (p :: Nat ~> Type) (n :: Nat).
-           Sing n
-        -> p @@ 0
-        -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k TL.+ 1))
-        -> p @@ n
-elimNat snat pZ pS =
-  case fromSing snat of
-    0        -> unsafeCoerce pZ
-    nPlusOne -> withSomeSing (pred nPlusOne) $ \(sn :: Sing k) ->
-                  unsafeCoerce (pS sn (elimNat @p @k sn pZ pS))

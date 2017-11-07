@@ -5,6 +5,7 @@
 {-# LANGUAGE TypeOperators #-}
 module VecSpec where
 
+import Data.Eliminator
 import Data.Kind
 import Data.Nat
 import Data.Singletons

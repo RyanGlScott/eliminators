@@ -11,13 +11,10 @@
 {-# LANGUAGE UndecidableInstances #-}
 module VecTypes where
 
-import Data.Eliminator.TH
 import Data.Kind
 import Data.Nat
 import Data.Singletons.Prelude.Num
 import Data.Singletons.TH
-
-$(deriveElim ''Nat)
 
 data Vec :: Type -> Nat -> Type where
   VNil :: Vec a Z

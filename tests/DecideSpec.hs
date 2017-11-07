@@ -8,7 +8,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 module DecideSpec where
 
-import Data.Eliminator hiding (elimNat)
+import Data.Eliminator
 import Data.Nat
 import Data.Singletons.Prelude
 import Data.Singletons.TH hiding (Decision(..))
@@ -16,7 +16,6 @@ import Data.Type.Equality
 
 import EqualitySpec (cong, replace)
 import DecideTypes
-import VecTypes
 
 import Test.Hspec
 
