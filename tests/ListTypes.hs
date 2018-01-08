@@ -15,5 +15,5 @@ type WhyMapPreservesLength (f :: x ~> y) (l :: [x])
 $(genDefunSymbols [''WhyMapPreservesLength])
 
 type WhyMapFusion (f :: y ~> z) (g :: x ~> y) (l :: [x])
-  = Map f (Map g l) :~: Map (f :.$$$ g) l
+  = Map f (Map g l) :~: Map (f .@#@$$$ g) l
 $(genDefunSymbols [''WhyMapFusion])

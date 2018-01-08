@@ -9,17 +9,11 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
--- TODO: Remove this in the next version of singletons
-{-# OPTIONS_GHC -Wno-orphans #-}
 module DecideTypes where
 
 import Data.Kind
 import Data.Nat
 import Data.Singletons.TH hiding (Decision(..))
-
--- TODO: Remove these in the next version of singletons
-$(genSingletons [''Void])
-$(genDefunSymbols [''(~>)])
 
 -- Due to https://github.com/goldfirere/singletons/issues/82, promoting the
 -- Decision data type from Data.Singletons.Decide is a tad awkward. To work
@@ -42,8 +36,8 @@ instance Show a => Show (Decision' p a) where
   showsPrec p (Disproved _) =
     showParen (p > 10) $ showString "Disproved <void>"
 
-type Decision  = Decision' (TyCon2 (->))
-type PDecision = Decision' (:~>$)
+type Decision  = Decision' (TyCon (->))
+type PDecision = Decision' (~>@#@$)
 
 data instance Sing (z :: PDecision a) where
   -- It would be lovely to not have to write those (:: PDecision a) kind

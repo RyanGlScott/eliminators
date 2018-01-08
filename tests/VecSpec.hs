@@ -6,7 +6,7 @@
 module VecSpec where
 
 import Data.Eliminator
-import Data.Kind
+import Data.Kind (Type)
 import Data.Nat
 import Data.Singletons
 import Data.Singletons.Prelude.Num
@@ -69,7 +69,7 @@ spec = parallel $ do
 
 replicateVec :: forall (e :: Type) (howMany :: Nat).
                 Sing howMany -> e -> Vec e howMany
-replicateVec s e = elimNat @(TyCon1 (Vec e)) @howMany s VNil step
+replicateVec s e = elimNat @(TyCon (Vec e)) @howMany s VNil step
   where
     step :: forall (k :: Nat). Sing k -> Vec e k -> Vec e (S k)
     step _ = (e :#)
@@ -102,7 +102,7 @@ zipWithVec f = elimNat @(WhyZipWithVecSym3 a b c) @n (sing @_ @n) base step
 
 appendVec :: forall (e :: Type) (n :: Nat) (m :: Nat).
              SingI n
-          => Vec e n -> Vec e m -> Vec e (n :+ m)
+          => Vec e n -> Vec e m -> Vec e (n + m)
 appendVec = elimNat @(WhyAppendVecSym2 e m) @n (sing @_ @n) base step
   where
     base :: WhyAppendVec e m Z
@@ -130,7 +130,7 @@ transposeVec = elimNat @(WhyTransposeVecSym2 e m) @n (sing @_ @n) base step
 
 concatVec :: forall (e :: Type) (n :: Nat) (j :: Nat).
              (SingKind e, SingI j, e ~ Demote e)
-          => Vec (Vec e j) n -> Vec e (n :* j)
+          => Vec (Vec e j) n -> Vec e (n * j)
 concatVec l = withSomeSing l $ \(singL :: Sing l) ->
                 elimVec @(Vec e j) @n @(WhyConcatVecSym e j) @l singL base step
   where

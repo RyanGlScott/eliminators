@@ -11,7 +11,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 module VecTypes where
 
-import Data.Kind
+import Data.Kind (Type)
 import Data.Nat
 import Data.Singletons.Prelude.Num
 import Data.Singletons.TH
@@ -65,7 +65,7 @@ type WhyZipWithVec (a :: Type) (b :: Type) (c :: Type) (n :: Nat)
 $(genDefunSymbols [''WhyZipWithVec])
 
 type WhyAppendVec (e :: Type) (m :: Nat) (n :: Nat)
-  = Vec e n -> Vec e m -> Vec e (n :+ m)
+  = Vec e n -> Vec e m -> Vec e (n + m)
 $(genDefunSymbols [''WhyAppendVec])
 
 type WhyTransposeVec (e :: Type) (m :: Nat) (n :: Nat)
@@ -73,7 +73,7 @@ type WhyTransposeVec (e :: Type) (m :: Nat) (n :: Nat)
 $(genDefunSymbols [''WhyTransposeVec])
 
 type WhyConcatVec (e :: Type) (j :: Nat) (n :: Nat) (l :: Vec (Vec e j) n)
-  = Vec e (n :* j)
+  = Vec e (n * j)
 data WhyConcatVecSym (e :: Type) (j :: Nat)
   :: forall (n :: Nat). Vec (Vec e j) n ~> Type
 type instance Apply (WhyConcatVecSym e j :: Vec (Vec e j) n ~> Type) l

@@ -41,12 +41,12 @@ mapPreservesLength
             Sing s -> Sing ss
          -> WhyMapPreservesLength f ss
          -> WhyMapPreservesLength f (s:ss)
-    step _ _ = cong @_ @_ @((:+$$) 1)
+    step _ _ = cong @_ @_ @((+@#@$$) 1)
 
 mapFusion :: forall (x :: Type) (y :: Type) (z :: Type)
                     (f :: y ~> z) (g :: x ~> y) (l :: [x]).
                     SingI l
-                 => Map f (Map g l) :~: Map (f :.$$$ g) l
+                 => Map f (Map g l) :~: Map (f .@#@$$$ g) l
 mapFusion
   = elimList @x @(WhyMapFusionSym2 f g) @l (sing @_ @l) base step
   where
@@ -57,4 +57,4 @@ mapFusion
             Sing s -> Sing ss
          -> WhyMapFusion f g ss
          -> WhyMapFusion f g (s:ss)
-    step _ _ = cong @_ @_ @((:$$) (f @@ (g @@ s)))
+    step _ _ = cong @_ @_ @((:@#@$$) (f @@ (g @@ s)))

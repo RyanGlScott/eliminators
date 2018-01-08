@@ -337,7 +337,7 @@ ireplicateA cnt0 f =
         | otherwise = liftA2 (:) (f n) (loop (cnt - 1) $! (n + 1))
 
 -----
--- Taken directly from singletons
+-- Taken directly from singletons 
 -----
 
 singDataConName :: Name -> Name
@@ -346,14 +346,18 @@ singDataConName nm
   | nm == '(:)                                     = 'SCons
   | Just degree <- tupleNameDegree_maybe nm        = mkTupleDataName degree
   | Just degree <- unboxedTupleNameDegree_maybe nm = mkTupleDataName degree
-  | otherwise                                      = prefixUCName "S" ":%" nm
+  | otherwise                                      = prefixConName "S" "%" nm
 
 mkTupleDataName :: Int -> Name
 mkTupleDataName n = mkName $ "STuple" ++ (show n)
 
--- put an uppercase prefix on a name. Takes two prefixes: one for identifiers
--- and one for symbols
-prefixUCName :: String -> String -> Name -> Name
-prefixUCName pre tyPre n = case (nameBase n) of
-    (':' : rest) -> mkName (tyPre ++ rest)
+-- Put an uppercase prefix on a constructor name. Takes two prefixes:
+-- one for identifiers and one for symbols.
+--
+-- This is different from 'prefixName' in that infix constructor names always
+-- start with a colon, so we must insert the prefix after the colon in order
+-- for the new name to be syntactically valid.
+prefixConName :: String -> String -> Name -> Name
+prefixConName pre tyPre n = case (nameBase n) of
+    (':' : rest) -> mkName (':' : tyPre ++ rest)
     alpha -> mkName (pre ++ alpha)

@@ -39,8 +39,7 @@ spec = parallel $ do
       show (decEqNatList (SCons (sLit @0) SNil) SNil)                   `shouldBe` disproved
       show (decEqNatList SNil                   (SCons (sLit @0) SNil)) `shouldBe` disproved
       show (decEqNatList (SCons (sLit @0) SNil) (SCons (sLit @0) SNil)) `shouldBe` proved
-      -- TODO: Try this in the next version of singletons
-      -- show (decEqNatList (SCons (sLit @1) SNil) (SCons (sLit @0) SNil)) `shouldBe` disproved
+      show (decEqNatList (SCons (sLit @1) SNil) (SCons (sLit @0) SNil)) `shouldBe` disproved
 
 -----
 
@@ -86,14 +85,14 @@ decCongS sn dNJ = withSomeSing dNJ $ \(sDNJ :: Sing d) ->
   where
     left :: forall (x :: n :~: j).
             Sing x -> Decision (S n :~: S j)
-    left yes = Proved $ cong @Nat @Nat @(TyCon1 S) @n @j (fromSing yes)
+    left yes = Proved $ cong @Nat @Nat @(TyCon S) @n @j (fromSing yes)
 
     right :: forall (r :: (n :~: j) ~> Void).
              Sing r -> Decision (S n :~: S j)
     right no = Disproved $ fromSing no . sInjective @n @j sn
 
 decEqNat :: forall (n :: Nat) (j :: Nat). Sing n -> Sing j -> Decision (n :~: j)
-decEqNat sn = runWhyDecEqNat (elimNat @(TyCon1 WhyDecEqNat) @n sn base step)
+decEqNat sn = runWhyDecEqNat (elimNat @(TyCon WhyDecEqNat) @n sn base step)
   where
     base :: WhyDecEqNat Z
     base = WhyDecEqNat decEqZ
