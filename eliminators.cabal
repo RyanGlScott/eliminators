@@ -28,8 +28,8 @@ library
                        Data.Eliminator.TypeNats
   build-depends:       base             >= 4.11    && < 4.12
                      , extra            >= 1.4.2   && < 1.7
-                     , singletons       >= 2.4     && < 2.5
-                     , singleton-nats   >= 0.4.0.3 && < 0.5
+                     , singletons       >= 2.4.1   && < 2.5
+                     , singleton-nats   >= 0.4.0.4 && < 0.5
                      , template-haskell >= 2.13    && < 2.14
                      , th-abstraction   >= 0.2.3   && < 0.3
                      , th-desugar       >= 1.8     && < 1.9
