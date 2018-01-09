@@ -1,5 +1,5 @@
-## next [????.??.??]
-* Require GHC 8.4.
+## 0.4 [2018.01.09]
+* Require `singletons-2.4` and GHC 8.4.
 
 ## 0.3 [2017-11-07]
 * Migrate the old `elimNat` from `Data.Eliminator` (which worked over the `Nat`
