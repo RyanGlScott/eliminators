@@ -51,8 +51,8 @@ test-suite spec
   build-depends:       base           >= 4.11    && < 4.12
                      , eliminators
                      , hspec          >= 2       && < 3
-                     , singletons     >= 2.4     && < 2.5
-                     , singleton-nats >= 0.4.0.3 && < 0.5
+                     , singletons     >= 2.4.1   && < 2.5
+                     , singleton-nats >= 0.4.0.4 && < 0.5
   build-tool-depends:  hspec-discover:hspec-discover
   hs-source-dirs:      tests
   default-language:    Haskell2010
