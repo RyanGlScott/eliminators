@@ -57,6 +57,7 @@ install:
   - HADDOCK=${HADDOCK-true}
   - INSTALLED=${INSTALLED-true}
   - GHCHEAD=${GHCHEAD-false}
+  - TARGETS=eliminators
   - travis_retry cabal update -v
   - "sed -i.bak 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config"
   - rm -fv cabal.project cabal.project.local
@@ -76,16 +77,21 @@ install:
       cabal new-update head.hackage -v
     fi
   - grep -Ev -- '^\s*--' ${HOME}/.cabal/config | grep -Ev '^\s*$'
-  - "printf 'packages: \".\"\\n' > cabal.project"
+  - "printf 'packages: \".\" \"./singleton-nats\"\\n' > cabal.project"
   - echo 'package eliminators' >> cabal.project
+  - "echo '  ghc-options: -Werror' >> cabal.project"
+  - echo 'package singleton-nats' >> cabal.project
   - "echo '  ghc-options: -Werror' >> cabal.project"
   - cat cabal.project
   - if [ -f "./configure.ac" ]; then
       (cd "." && autoreconf -i);
     fi
+  - if [ -f "./singleton-nats/configure.ac" ]; then
+      (cd "./singleton-nats" && autoreconf -i);
+    fi
   - rm -f cabal.project.freeze
-  - cabal new-build -w ${HC} ${TEST} ${BENCH} --project-file="cabal.project" --dep -j2 all
-  - rm -rf "."/.ghc.environment.* "."/dist
+  - cabal new-build -w ${HC} ${TEST} ${BENCH} --project-file="cabal.project" --dep -j2 ${TARGETS}
+  - rm -rf "."/.ghc.environment.* "./singleton-nats"/.ghc.environment.* "."/dist "./singleton-nats"/dist
   - DISTDIR=$(mktemp -d /tmp/dist-test.XXXX)
 
 # Here starts the actual work to be performed for the package under test;
@@ -93,25 +99,29 @@ install:
 script:
   # test that source-distributions can be generated
   - (cd "." && cabal sdist)
-  - mv "."/dist/eliminators-*.tar.gz ${DISTDIR}/
+  - (cd "./singleton-nats" && cabal sdist)
+  - mv "."/dist/eliminators-*.tar.gz "./singleton-nats"/dist/singleton-nats-*.tar.gz ${DISTDIR}/
   - cd ${DISTDIR} || false
   - find . -maxdepth 1 -name '*.tar.gz' -exec tar -xvf '{}' \;
-  - "printf 'packages: eliminators-*/*.cabal\\n' > cabal.project"
+  - "printf 'packages: eliminators-*/*.cabal singleton-nats-*/*.cabal\\n' > cabal.project"
   - echo 'package eliminators' >> cabal.project
+  - "echo '  ghc-options: -Werror' >> cabal.project"
+  - echo 'package singleton-nats' >> cabal.project
   - "echo '  ghc-options: -Werror' >> cabal.project"
   - cat cabal.project
 
 
   # build & run tests, build benchmarks
-  - cabal new-build -w ${HC} ${TEST} ${BENCH} all
-  - if [ "x$TEST" = "x--enable-tests" ]; then cabal new-test -w ${HC} ${TEST} ${BENCH} all; fi
+  - cabal new-build -w ${HC} ${TEST} ${BENCH} ${TARGETS}
+  - if [ "x$TEST" = "x--enable-tests" ]; then cabal new-test -w ${HC} ${TEST} ${BENCH} ${TARGETS}; fi
 
   # cabal check
   - (cd eliminators-* && cabal check)
+  - (cd singleton-nats-* && cabal check)
 
   # haddock
   - rm -rf ./dist-newstyle
-  - if $HADDOCK; then cabal new-haddock -w ${HC} ${TEST} ${BENCH} all; else echo "Skipping haddock generation";fi
+  - if $HADDOCK; then cabal new-haddock -w ${HC} ${TEST} ${BENCH} ${TARGETS}; else echo "Skipping haddock generation";fi
 
 # REGENDATA ["-o",".travis.yml","--no-no-tests-no-bench","--no-installed","--local-ghc-options=-Werror","cabal.project"]
 # EOF

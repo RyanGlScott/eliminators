@@ -337,7 +337,7 @@ ireplicateA cnt0 f =
         | otherwise = liftA2 (:) (f n) (loop (cnt - 1) $! (n + 1))
 
 -----
--- Taken directly from singletons 
+-- Taken directly from singletons
 -----
 
 singDataConName :: Name -> Name
