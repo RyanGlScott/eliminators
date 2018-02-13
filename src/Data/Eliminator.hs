@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
@@ -37,6 +38,7 @@ module Data.Eliminator (
   , elimTuple5
   , elimTuple6
   , elimTuple7
+  , elimVoid
   ) where
 
 import Control.Monad.Extra
@@ -46,6 +48,7 @@ import Data.List.NonEmpty (NonEmpty(..))
 import Data.Nat
 import Data.Singletons.Prelude
 import Data.Singletons.Prelude.List.NonEmpty (Sing(..))
+import Data.Void (Void)
 
 import Language.Haskell.TH.Desugar (tupleNameDegree_maybe)
 
@@ -65,7 +68,7 @@ The naming conventions are:
   with @~>@ prepended.
 -}
 
-$(concatMapM deriveElim [''Bool, ''Either, ''Maybe, ''Nat, ''NonEmpty, ''Ordering])
+$(concatMapM deriveElim [''Bool, ''Either, ''Maybe, ''Nat, ''NonEmpty, ''Ordering, ''Void])
 $(deriveElimNamed "elimList" ''[])
 $(concatMapM (\n -> let Just deg = tupleNameDegree_maybe n
                     in deriveElimNamed ("elimTuple" ++ show deg) n)
