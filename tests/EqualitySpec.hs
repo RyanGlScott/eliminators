@@ -136,6 +136,7 @@ replace from eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
     (~>:~:) @t @from @to @(WhyReplaceSym from p) @r singEq from
 
+-- Doesn't work due to https://ghc.haskell.org/trac/ghc/ticket/11719
 {-
 type WhyHreplace (from :: j) (p :: forall (z :: Type). z ~> Type)
                  (y :: k) (e :: from :~~: y) = p @@ y
