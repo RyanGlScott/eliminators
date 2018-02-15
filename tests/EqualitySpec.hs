@@ -43,6 +43,7 @@ instance SingKind (a :~: b) where
 instance SingI Refl where
   sing = SRefl
 
+-- | Christine Paulin-Mohring's version of the J rule.
 (~>:~:) :: forall (k :: Type) (a :: k) (b :: k)
                   (p :: forall (y :: k). a :~: y ~> Type)
                   (r :: a :~: b).
@@ -50,6 +51,22 @@ instance SingI Refl where
         -> p @@ Refl
         -> p @@ r
 (~>:~:) SRefl pRefl = pRefl
+
+j :: forall (k :: Type) (a :: k) (b :: k)
+            (p :: forall (x :: k) (y :: k). x :~: y ~> Type)
+            (r :: a :~: b).
+     Sing a -> Sing b -> Sing r
+  -> (forall (x :: k). Sing x -> p @@ (Refl :: x :~: x))
+  -> p @@ r
+j sa _sa SRefl p = p sa
+
+k :: forall (k :: Type) (a :: k)
+            (p :: a :~: a ~> Type)
+            (r :: a :~: a).
+     Sing r
+  -> p @@ Refl
+  -> p @@ r
+k SRefl pRefl = pRefl
 
 data instance Sing (z :: a :~~: b) where
   SHRefl :: Sing HRefl
@@ -63,6 +80,7 @@ instance SingKind (a :~~: b) where
 instance SingI HRefl where
   sing = SHRefl
 
+-- | Christine Paulin-Mohring's version of the J rule, but heterogeneously kinded.
 (~>:~~:) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
                    (p :: forall (z :: Type) (y :: z). a :~~: y ~> Type)
                    (r :: a :~~: b).
@@ -70,6 +88,22 @@ instance SingI HRefl where
          -> p @@ HRefl
          -> p @@ r
 (~>:~~:) SHRefl pHRefl = pHRefl
+
+hj :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
+             (p :: forall (y :: Type) (z :: Type) (w :: y) (x :: z). w :~~: x ~> Type)
+             (r :: a :~~: b).
+      Sing a -> Sing b -> Sing r
+   -> (forall (y :: Type) (w :: y). Sing w -> p @@ (HRefl :: w :~~: w))
+   -> p @@ r
+hj sa _sa SHRefl p = p sa
+
+hk :: forall (k :: Type) (a :: k)
+             (p :: a :~~: a ~> Type)
+             (r :: a :~~: a).
+      Sing r
+   -> p @@ HRefl
+   -> p @@ r
+hk SHRefl pHRefl = pHRefl
 
 -----
 
