@@ -55,10 +55,10 @@ instance SingI Refl where
 j :: forall (k :: Type) (a :: k) (b :: k)
             (p :: forall (x :: k) (y :: k). x :~: y ~> Type)
             (r :: a :~: b).
-     Sing a -> Sing b -> Sing r
-  -> (forall (x :: k). Sing x -> p @@ (Refl :: x :~: x))
+     Sing r
+  -> (forall (x :: k). p @@ (Refl :: x :~: x))
   -> p @@ r
-j sa _sa SRefl p = p sa
+j SRefl pRefl = pRefl @a
 
 k :: forall (k :: Type) (a :: k)
             (p :: a :~: a ~> Type)
@@ -92,10 +92,10 @@ instance SingI HRefl where
 hj :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
              (p :: forall (y :: Type) (z :: Type) (w :: y) (x :: z). w :~~: x ~> Type)
              (r :: a :~~: b).
-      Sing a -> Sing b -> Sing r
-   -> (forall (y :: Type) (w :: y). Sing w -> p @@ (HRefl :: w :~~: w))
+      Sing r
+   -> (forall (y :: Type) (w :: y). p @@ (HRefl :: w :~~: w))
    -> p @@ r
-hj sa _sa SHRefl p = p sa
+hj SHRefl pHRefl = pHRefl @k @a
 
 hk :: forall (k :: Type) (a :: k)
              (p :: a :~~: a ~> Type)
