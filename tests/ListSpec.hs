@@ -1,10 +1,11 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 module ListSpec where
 
@@ -32,7 +33,7 @@ mapPreservesLength :: forall (x :: Type) (y :: Type) (f :: x ~> y) (l :: [x]).
                       SingI l
                    => Length l :~: Length (Map f l)
 mapPreservesLength
-  = elimList @x @(WhyMapPreservesLengthSym1 f) @l (sing @_ @l) base step
+  = elimList @x @(WhyMapPreservesLengthSym1 f) @l (sing @l) base step
   where
     base :: WhyMapPreservesLength f '[]
     base = Refl
@@ -48,7 +49,7 @@ mapFusion :: forall (x :: Type) (y :: Type) (z :: Type)
                     SingI l
                  => Map f (Map g l) :~: Map (f .@#@$$$ g) l
 mapFusion
-  = elimList @x @(WhyMapFusionSym2 f g) @l (sing @_ @l) base step
+  = elimList @x @(WhyMapFusionSym2 f g) @l (sing @l) base step
   where
     base :: WhyMapFusion f g '[]
     base = Refl

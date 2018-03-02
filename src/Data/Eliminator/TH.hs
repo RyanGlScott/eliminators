@@ -108,7 +108,11 @@ There are some important things to note here:
 
     * @AllowAmbiguousTypes@
 
+    * @DataKinds@
+
     * @GADTs@
+
+    * @PolyKinds@
 
     * @RankNTypes@
 
@@ -117,8 +121,6 @@ There are some important things to note here:
     * @TemplateHaskell@
 
     * @TypeApplications@
-
-    * @TypeInType@
 
 * 'deriveElim' doesn't support every possible data type at the moment.
   It is known not to work for the following:

@@ -1,7 +1,9 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE NoStarIsType #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 module VecSpec where
 
@@ -77,7 +79,7 @@ replicateVec s e = elimNat @(TyCon (Vec e)) @howMany s VNil step
 mapVec :: forall (a :: Type) (b :: Type) (n :: Nat).
           SingI n
        => (a -> b) -> Vec a n -> Vec b n
-mapVec f = elimNat @(WhyMapVecSym2 a b) @n (sing @_ @n) base step
+mapVec f = elimNat @(WhyMapVecSym2 a b) @n (sing @n) base step
   where
     base :: WhyMapVec a b Z
     base _ = VNil
@@ -88,7 +90,7 @@ mapVec f = elimNat @(WhyMapVecSym2 a b) @n (sing @_ @n) base step
 zipWithVec :: forall (a :: Type) (b :: Type) (c :: Type) (n :: Nat).
               SingI n
            => (a -> b -> c) -> Vec a n -> Vec b n -> Vec c n
-zipWithVec f = elimNat @(WhyZipWithVecSym3 a b c) @n (sing @_ @n) base step
+zipWithVec f = elimNat @(WhyZipWithVecSym3 a b c) @n (sing @n) base step
   where
     base :: WhyZipWithVec a b c Z
     base _ _ = VNil
@@ -103,7 +105,7 @@ zipWithVec f = elimNat @(WhyZipWithVecSym3 a b c) @n (sing @_ @n) base step
 appendVec :: forall (e :: Type) (n :: Nat) (m :: Nat).
              SingI n
           => Vec e n -> Vec e m -> Vec e (n + m)
-appendVec = elimNat @(WhyAppendVecSym2 e m) @n (sing @_ @n) base step
+appendVec = elimNat @(WhyAppendVecSym2 e m) @n (sing @n) base step
   where
     base :: WhyAppendVec e m Z
     base _ = id
@@ -117,10 +119,10 @@ appendVec = elimNat @(WhyAppendVecSym2 e m) @n (sing @_ @n) base step
 transposeVec :: forall (e :: Type) (n :: Nat) (m :: Nat).
                 (SingI n, SingI m)
              => Vec (Vec e m) n -> Vec (Vec e n) m
-transposeVec = elimNat @(WhyTransposeVecSym2 e m) @n (sing @_ @n) base step
+transposeVec = elimNat @(WhyTransposeVecSym2 e m) @n (sing @n) base step
   where
     base :: WhyTransposeVec e m Z
-    base _ = replicateVec (sing @_ @m) VNil
+    base _ = replicateVec (sing @m) VNil
 
     step :: forall (k :: Nat).
             Sing k

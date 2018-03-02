@@ -1,10 +1,11 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 module EqualitySpec where
@@ -67,22 +68,22 @@ hk SHRefl pHRefl = pHRefl
 sym :: forall (t :: Type) (a :: t) (b :: t).
        a :~: b -> b :~: a
 sym eq = withSomeSing eq $ \(singEq :: Sing r) ->
-           (~>:~:) @t @a @b @(WhySymSym a) @r singEq Refl
+           (~>:~:) @t @a @b @(WhySymSym1 a) @r singEq Refl
 
 hsym :: forall (j :: Type) (k :: Type) (a :: j) (b :: k).
         a :~~: b -> b :~~: a
 hsym eq = withSomeSing eq $ \(singEq :: Sing r) ->
-            (~>:~~:) @j @k @a @b @(WhyHsymSym a) @r singEq HRefl
+            (~>:~~:) @j @k @a @b @(WhyHsymSym1 a) @r singEq HRefl
 
 symIdempotent :: forall (t :: Type) (a :: t) (b :: t)
                         (e :: a :~: b).
                  Sing e -> Symmetry (Symmetry e) :~: e
-symIdempotent se = (~>:~:) @t @a @b @(WhySymIdempotentSym a) @e se Refl
+symIdempotent se = (~>:~:) @t @a @b @(WhySymIdempotentSym1 a) @e se Refl
 
 hsymIdempotent :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
                          (e :: a :~~: b).
                   Sing e -> Hsymmetry (Hsymmetry e) :~: e
-hsymIdempotent se = (~>:~~:) @j @k @a @b @(WhyHsymIdempotentSym a) @e se Refl
+hsymIdempotent se = (~>:~~:) @j @k @a @b @(WhyHsymIdempotentSym1 a) @e se Refl
 
 replace :: forall (t :: Type) (from :: t) (to :: t) (p :: t ~> Type).
            p @@ from
@@ -90,7 +91,7 @@ replace :: forall (t :: Type) (from :: t) (to :: t) (p :: t ~> Type).
         -> p @@ to
 replace from eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
-    (~>:~:) @t @from @to @(WhyReplaceSym from p) @r singEq from
+    (~>:~:) @t @from @to @(WhyReplaceSym2 from p) @r singEq from
 
 -- Doesn't work due to https://ghc.haskell.org/trac/ghc/ticket/11719
 {-
@@ -101,14 +102,14 @@ hreplace :: forall (j :: Type) (k :: Type) (from :: j) (to :: k)
          -> p @@ to
 hreplace from heq =
   withSomeSing eq $ \(singEq :: Sing r) ->
-    (~>:~~:) @j @k @from @to @(WhyHreplaceSym from p) singEq from
+    (@~>:~~:) @j @k @from @to @(WhyHreplaceSym2 from p) singEq from
 -}
 
 leibniz :: forall (t :: Type) (f :: t ~> Type) (a :: t) (b :: t).
            a :~: b
         -> f @@ a
         -> f @@ b
-leibniz = replace @t @a @b @(WhyLeibnizSym f a) id
+leibniz = replace @t @a @b @(WhyLeibnizSym2 f a) id
 
 cong :: forall (x :: Type) (y :: Type) (f :: x ~> y)
                (a :: x) (b :: x).
@@ -116,12 +117,12 @@ cong :: forall (x :: Type) (y :: Type) (f :: x ~> y)
      -> f @@ a :~: f @@ b
 cong eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
-    (~>:~:) @x @a @b @(WhyCongSym x y f a) @r singEq Refl
+    (~>:~:) @x @a @b @(WhyCongSym2 f a) @r singEq Refl
 
 eqIsRefl :: forall (k :: Type) (a :: k) (b :: k) (e :: a :~: b).
             Sing e -> e :~~: (Refl :: a :~: a)
-eqIsRefl eq = (~>:~:) @k @a @b @(WhyEqIsReflSym a) @e eq HRefl
+eqIsRefl eq = (~>:~:) @k @a @b @(WhyEqIsReflSym1 a) @e eq HRefl
 
 heqIsHRefl :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (e :: a :~~: b).
               Sing e -> e :~~: (HRefl :: a :~~: a)
-heqIsHRefl heq = (~>:~~:) @j @k @a @b @(WhyHEqIsHReflSym a) @e heq HRefl
+heqIsHRefl heq = (~>:~~:) @j @k @a @b @(WhyHEqIsHReflSym1 a) @e heq HRefl
