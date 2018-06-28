@@ -29,9 +29,9 @@ import Unsafe.Coerce (unsafeCoerce)
 -- (crudely) pretend that it is using this eliminator.
 elimNat :: forall (p :: Nat ~> Type) (n :: Nat).
            Sing n
-        -> p @@ 0
-        -> (forall (k :: Nat). Sing k -> p @@ k -> p @@ (k + 1))
-        -> p @@ n
+        -> Apply p 0
+        -> (forall (k :: Nat). Sing k -> Apply p k -> Apply p (k + 1))
+        -> Apply p n
 elimNat snat pZ pS =
   case fromSing snat of
     0        -> unsafeCoerce pZ

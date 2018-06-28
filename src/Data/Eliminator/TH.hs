@@ -46,11 +46,11 @@ This will produce an eliminator function that looks roughly like the following:
 @
 elimMyList :: forall (a :: 'Type') (p :: MyList a '~>' 'Type') (l :: MyList a).
               'Sing' l
-           -> p '@@' MyNil
+           -> 'Apply' p MyNil
            -> (forall (x :: a). 'Sing' x
-                -> forall (xs :: MyList a). 'Sing' xs -> p '@@' xs
-                -> p '@@' (MyCons x xs))
-           -> p '@@' l
+                -> forall (xs :: MyList a). 'Sing' xs -> 'Apply' p xs
+                -> 'Apply' p (MyCons x xs))
+           -> 'Apply' p l
 elimMyList SMyNil pMyNil _ = pMyNil
 elimMyList (SMyCons (x' :: 'Sing' x) (xs' :: 'Sing' xs)) pMyNil pMyCons
   = pMyCons x' xs' (elimMyList \@a \@p \@xs pMyNil pMyCons)
@@ -82,7 +82,7 @@ There are some important things to note here:
        in a second.
 
   The return type is the predicate type variable applied to the data type
-  (@p '@@' (MyCons x xs)@, the above example).
+  (@'Apply' p (MyCons x xs)@, the above example).
 
   The type of each constructor argument also follows certain conventions:
 
@@ -96,12 +96,12 @@ There are some important things to note here:
        explained using the above example. In the @MyCons@ constructor, the second
        field (of type @MyCons a@) is a recursive occurrence of @MyCons@, so
        that corresponds to the type
-       @forall (xs :: MyList a). 'Sing' xs -> p '@@' xs@, where @p '@@' xs@
+       @forall (xs :: MyList a). 'Sing' xs -> 'Apply' p xs@, where @'Apply' p xs@
        is only present due to the recursion.
 
     3. Finally, the return type will be the predicate type variable applied
        to a saturated occurrence of the data constructor
-       (@p '@@' (MyCons x xs)@, in the above example).
+       (@'Apply' p (MyCons x xs)@, in the above example).
 
 * You'll need to enable lots of GHC extensions in order for the code generated
   by 'deriveElim' to typecheck. You'll need at least the following:
@@ -263,9 +263,9 @@ mbInductiveCase dataName varType inductiveArg
 singType :: Name -> Type
 singType x = ConT ''Sing `AppT` VarT x
 
--- | Construct a type of the form @p '@@' ty@ given @p@ and @ty@.
+-- | Construct a type of the form @'Apply' p ty@ given @p@ and @ty@.
 predType :: Name -> Type -> Type
-predType p ty = InfixT (VarT p) ''(@@) ty
+predType p ty = ConT ''Apply `AppT` VarT p `AppT` ty
 
 -- | Generate a list of fresh names with a common prefix, and numbered suffixes.
 newNameList :: String -> Int -> Q [Name]

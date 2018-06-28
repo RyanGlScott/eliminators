@@ -55,9 +55,9 @@ import Language.Haskell.TH.Desugar (tupleNameDegree_maybe)
 {- $eliminators
 
 These eliminators are defined with propositions of kind @\<Datatype\> ~> 'Type'@
-(that is, using the '(~>)' kind). These eliminators are designed for
+(that is, using the @('~>')@ kind). These eliminators are designed for
 defunctionalized (i.e., \"partially applied\") types as predicates,
-and as a result, the predicates must be applied manually with '(@@)'.
+and as a result, the predicates must be applied manually with 'Apply'.
 
 The naming conventions are:
 
