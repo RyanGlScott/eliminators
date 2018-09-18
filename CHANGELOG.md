@@ -1,3 +1,6 @@
+## next [????.??.??]
+* Require `singletons-2.5` and GHC 8.6.
+
 ### 0.4.1 [2018.02.13]
 * Add `elimVoid` to `Data.Eliminator`.
 

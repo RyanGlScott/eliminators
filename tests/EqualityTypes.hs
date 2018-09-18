@@ -1,17 +1,19 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module EqualityTypes where
 
 import           Data.Kind
-import           Data.Singletons
+import           Data.Singletons.TH
 import           Data.Type.Equality ((:~:)(..), (:~~:)(..))
 
 data instance Sing (z :: a :~: b) where
@@ -58,70 +60,45 @@ instance SingI HRefl where
 
 -----
 
-type WhySym (a :: t) (y :: t) (e :: a :~: y) = y :~: a
-data WhySymSym (a :: t) :: forall (y :: t). a :~: y ~> Type
-type instance Apply (WhySymSym a :: a :~: y ~> Type) x
-  = WhySym a y x
+$(singletons [d|
+  type family WhySym (a :: t) (e :: a :~: (y :: t)) :: Type where
+    WhySym a (_ :: a :~: y) = y :~: a
 
-type WhyHsym (a :: j) (y :: z) (e :: a :~~: y) = y :~~: a
-data WhyHsymSym (a :: j) :: forall (z :: Type) (y :: z). a :~~: y ~> Type
-type instance Apply (WhyHsymSym a :: a :~~: y ~> Type) x
-  = WhyHsym a y x
+  type family WhyHsym (a :: j) (e :: a :~~: (y :: z)) :: Type where
+    WhyHsym a (_ :: a :~~: y)  = y :~~: a
 
-type family Symmetry (x :: (a :: k) :~: (b :: k)) :: b :~: a where
-  Symmetry Refl = Refl
+  type family Symmetry (x :: (a :: k) :~: (b :: k)) :: b :~: a where
+    Symmetry Refl = Refl
 
-type WhySymIdempotent (a :: t) (z :: t) (r :: a :~: z)
-  = Symmetry (Symmetry r) :~: r
-data WhySymIdempotentSym (a :: t) :: forall (z :: t). a :~: z ~> Type
-type instance Apply (WhySymIdempotentSym a :: a :~: z ~> Type) r
-  = WhySymIdempotent a z r
+  type family WhySymIdempotent (a :: t) (r :: a :~: (z :: t)) :: Type where
+    WhySymIdempotent _ r = Symmetry (Symmetry r) :~: r
 
-type family Hsymmetry (x :: (a :: j) :~~: (b :: k)) :: b :~~: a where
-  Hsymmetry HRefl = HRefl
+  type family Hsymmetry (x :: a :~~: b) :: b :~~: a where
+    Hsymmetry HRefl = HRefl
 
-type WhyHsymIdempotent (a :: j) (y :: z) (r :: a :~~: y)
-  = Hsymmetry (Hsymmetry r) :~: r
-data WhyHsymIdempotentSym (a :: j) :: forall (z :: Type) (y :: z). a :~~: y ~> Type
-type instance Apply (WhyHsymIdempotentSym a :: a :~~: y ~> Type) r
-  = WhyHsymIdempotent a y r
+  type family WhyHsymIdempotent (a :: j) (r :: a :~~: (y :: z)) :: Type where
+    WhyHsymIdempotent _ r = Hsymmetry (Hsymmetry r) :~: r
 
-type WhyReplace (from :: t) (p :: t ~> Type)
-                (y :: t) (e :: from :~: y) = p @@ y
-data WhyReplaceSym (from :: t) (p :: t ~> Type)
-  :: forall (y :: t). from :~: y ~> Type
-type instance Apply (WhyReplaceSym from p :: from :~: y ~> Type) x
-  = WhyReplace from p y x
+  type family WhyReplace (from :: t) (p :: t ~> Type)
+                         (e :: from :~: (y :: t)) :: Type where
+    WhyReplace from p (_ :: from :~: y) = p @@ y
 
--- Doesn't work due to https://ghc.haskell.org/trac/ghc/ticket/11719
-{-
-type WhyHreplace (from :: j) (p :: forall (z :: Type). z ~> Type)
-                 (y :: k) (e :: from :~~: y) = p @@ y
-data WhyHreplaceSym (from :: j) (p :: forall (z :: Type). z ~> Type)
-  :: forall (k :: Type) (y :: k). from :~~: y ~> Type
-type instance Apply (WhyHreplaceSym from p :: from :~~: y ~> Type) x
-  = WhyHreplace from p y x
--}
+  -- Doesn't work due to https://ghc.haskell.org/trac/ghc/ticket/11719
+  {-
+  type family WhyHreplace (from :: j) (p :: forall (z :: Type). z ~> Type)
+                          (e :: from :~~: (y :: k)) :: Type where
+    WhyHreplace from p (_ :: from :~~: y) = p @@ y
+  -}
 
-type WhyLeibniz (f :: t ~> Type) (a :: t) (z :: t)
-  = f @@ a -> f @@ z
-data WhyLeibnizSym (f :: t ~> Type) (a :: t) :: t ~> Type
-type instance Apply (WhyLeibnizSym f a) z = WhyLeibniz f a z
+  type family WhyLeibniz (f :: t ~> Type) (a :: t) (z :: t) :: Type where
+    WhyLeibniz f a z = f @@ a -> f @@ z
 
-type WhyCong (x :: Type) (y :: Type) (f :: x ~> y)
-             (a :: x) (z :: x) (e :: a :~: z)
-  = f @@ a :~: f @@ z
-data WhyCongSym (x :: Type) (y :: Type) (f :: x ~> y)
-                (a :: x) :: forall (z :: x). a :~: z ~> Type
-type instance Apply (WhyCongSym x y f a :: a :~: z ~> Type) e
-  = WhyCong x y f a z e
+  type family WhyCong (f :: x ~> y) (a :: x) (e :: a :~: (z :: x)) :: Type where
+    WhyCong (f :: x ~> y) (a :: x) (e :: a :~: (z :: x)) = f @@ a :~: f @@ z
 
-type WhyEqIsRefl (a :: k) (z :: k) (e :: a :~: z)
-  = e :~~: (Refl :: a :~: a)
-data WhyEqIsReflSym (a :: k) :: forall (z :: k). a :~: z ~> Type
-type instance Apply (WhyEqIsReflSym a :: a :~: z ~> Type) e = WhyEqIsRefl a z e
+  type family WhyEqIsRefl (a :: k) (e :: a :~: (z :: k)) :: Type where
+    WhyEqIsRefl a e = e :~~: (Refl :: a :~: a)
 
-type WhyHEqIsHRefl (a :: j) (z :: k) (e :: a :~~: z)
-  = e :~~: (HRefl :: a :~~: a)
-data WhyHEqIsHReflSym (a :: j) :: forall (k :: Type) (z :: k). a :~~: z ~> Type
-type instance Apply (WhyHEqIsHReflSym a :: a :~~: z ~> Type) e = WhyHEqIsHRefl a z e
+  type family WhyHEqIsHRefl (a :: j) (e :: a :~~: (z :: k)) :: Type where
+    WhyHEqIsHRefl a e = e :~~: (HRefl :: a :~~: a)
+  |])
