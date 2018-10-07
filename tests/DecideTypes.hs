@@ -44,8 +44,8 @@ data instance Sing (z :: PDecision a) where
   -- It would be lovely to not have to write those (:: PDecision a) kind
   -- ascriptions in the return types of each constructor.
   -- See https://ghc.haskell.org/trac/ghc/ticket/14111.
-  SProved    :: forall (x :: a).         Sing x -> Sing (Proved x    :: PDecision a)
-  SDisproved :: forall (r :: a ~> Void). Sing r -> Sing (Disproved r :: PDecision a)
+  SProved    :: forall a (x :: a).         Sing x -> Sing (Proved x    :: PDecision a)
+  SDisproved :: forall a (r :: a ~> Void). Sing r -> Sing (Disproved r :: PDecision a)
 
 instance SingKind a => SingKind (PDecision a) where
   type Demote (PDecision a) = Decision (Demote a)

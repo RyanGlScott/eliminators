@@ -114,7 +114,7 @@ decEqNat sn = runWhyDecEqNat (elimNat @(TyCon WhyDecEqNat) @n sn base step)
                  -> Decision (S k :~: S m)
         stepStep sm _ = decCongS sk (runWhyDecEqNat swhyK sm)
 
-listEqConsequencesSame :: forall (es :: [e]). Sing es -> ListEqConsequences es es
+listEqConsequencesSame :: forall e (es :: [e]). Sing es -> ListEqConsequences es es
 listEqConsequencesSame sl = elimList @e @WhyListEqConsequencesSameSym0 @es sl base step
   where
     base :: ListEqConsequences '[] '[]
@@ -126,24 +126,24 @@ listEqConsequencesSame sl = elimList @e @WhyListEqConsequencesSameSym0 @es sl ba
          -> ListEqConsequences (x:xs) (x:xs)
     step _ _ _ = (Refl, Refl)
 
-useListEq :: forall (xs :: [e]) (ys :: [e]).
+useListEq :: forall e (xs :: [e]) (ys :: [e]).
              Sing xs -> xs :~: ys -> ListEqConsequences xs ys
 useListEq sxs xsEqYs = replace @[e] @xs @ys @(ListEqConsequencesSym1 xs)
                                (listEqConsequencesSame @e @xs sxs) xsEqYs
 
-nilNotCons :: forall (x :: e) (xs :: [e]). '[] :~: (x:xs) -> Void
+nilNotCons :: forall e (x :: e) (xs :: [e]). '[] :~: (x:xs) -> Void
 nilNotCons = useListEq @e @'[] @(x:xs) SNil
 
-consNotNil :: forall (x :: e) (xs :: [e]). (x:xs) :~: '[] -> Void
+consNotNil :: forall e (x :: e) (xs :: [e]). (x:xs) :~: '[] -> Void
 consNotNil eq = nilNotCons @e @x @xs (sym eq)
 
-consInjective :: forall (x :: e) (xs :: [e]) (y :: e) (ys :: [e]).
+consInjective :: forall e (x :: e) (xs :: [e]) (y :: e) (ys :: [e]).
                  Sing x -> Sing xs
               -> (x:xs) :~: (y:ys)
               -> (x :~: y, xs :~: ys)
 consInjective sx sxs = useListEq @e @(x:xs) @(y:ys) (SCons sx sxs)
 
-decEqNil :: forall (es :: [e]). Sing es -> Decision ('[] :~: es)
+decEqNil :: forall e (es :: [e]). Sing es -> Decision ('[] :~: es)
 decEqNil ses = elimList @e @WhyDecEqNilSym0 @es ses base step
   where
     base :: Decision ('[] :~: '[])
@@ -155,7 +155,7 @@ decEqNil ses = elimList @e @WhyDecEqNilSym0 @es ses base step
          -> Decision ('[] :~: (x:xs))
     step _ _ _ = Disproved (nilNotCons @e @x @xs)
 
-intermixListEqs :: forall (x :: e) (xs :: [e]) (y :: e) (ys :: [e]).
+intermixListEqs :: forall e (x :: e) (xs :: [e]) (y :: e) (ys :: [e]).
                    x :~: y -> xs :~: ys
                 -> (x:xs) :~: (y:ys)
 intermixListEqs xEqY xsEqYs =
@@ -163,7 +163,7 @@ intermixListEqs xEqY xsEqYs =
           (replace @[e] @xs @ys @(WhyIntermixListEqs2Sym2 x xs) Refl xsEqYs)
           xEqY
 
-decCongCons :: forall (x :: e) (xs :: [e]) (y :: e) (ys :: [e]).
+decCongCons :: forall e (x :: e) (xs :: [e]) (y :: e) (ys :: [e]).
                Sing x -> Sing xs
             -> Decision (x :~: y) -> Decision (xs :~: ys)
             -> Decision ((x:xs) :~: (y:ys))
@@ -193,7 +193,7 @@ decCongCons sx sxs dXY dXsYs =
     injective :: (x:xs) :~: (y:ys) -> (x :~: y, xs :~: ys)
     injective = consInjective @e @x @xs @y @ys sx sxs
 
-decEqList :: forall (es1 :: [e]) (es2 :: [e]).
+decEqList :: forall e (es1 :: [e]) (es2 :: [e]).
              (forall (e1 :: e) (e2 :: e).
                      Sing e1 -> Sing e2 -> Decision (e1 :~: e2))
           -> Sing es1 -> Sing es2 -> Decision (es1 :~: es2)

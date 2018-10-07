@@ -62,7 +62,7 @@ data Obj :: Type where
   MkObj :: o -> Obj
 
 data instance Sing (z :: Obj) where
-  SMkObj :: forall (obj :: obiwan). Sing obj -> Sing (MkObj obj)
+  SMkObj :: forall obiwan (obj :: obiwan). Sing obj -> Sing (MkObj obj)
 type SObj = (Sing :: Obj -> Type)
 
 elimObj :: forall (o :: Obj) (p :: Obj ~> Type).
