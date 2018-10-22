@@ -33,7 +33,7 @@ spec = parallel $ do
 
 -----
 
-j :: forall (k :: Type) (a :: k) (b :: k)
+j :: forall k (a :: k) (b :: k)
             (p :: forall (x :: k) (y :: k). x :~: y ~> Type)
             (r :: a :~: b).
      Sing r
@@ -41,15 +41,15 @@ j :: forall (k :: Type) (a :: k) (b :: k)
   -> p @@ r
 j SRefl pRefl = pRefl @a
 
-hj :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
-             (p :: forall (y :: Type) (z :: Type) (w :: y) (x :: z). w :~~: x ~> Type)
+hj :: forall j k (a :: j) (b :: k)
+             (p :: forall y z (w :: y) (x :: z). w :~~: x ~> Type)
              (r :: a :~~: b).
       Sing r
-   -> (forall (y :: Type) (w :: y). p @@ (HRefl :: w :~~: w))
+   -> (forall y (w :: y). p @@ (HRefl :: w :~~: w))
    -> p @@ r
 hj SHRefl pHRefl = pHRefl @k @a
 
-k :: forall (k :: Type) (a :: k)
+k :: forall k (a :: k)
             (p :: a :~: a ~> Type)
             (r :: a :~: a).
      Sing r
@@ -57,7 +57,7 @@ k :: forall (k :: Type) (a :: k)
   -> p @@ r
 k SRefl pRefl = pRefl
 
-hk :: forall (k :: Type) (a :: k)
+hk :: forall k (a :: k)
              (p :: a :~~: a ~> Type)
              (r :: a :~~: a).
       Sing r
@@ -65,27 +65,27 @@ hk :: forall (k :: Type) (a :: k)
    -> p @@ r
 hk SHRefl pHRefl = pHRefl
 
-sym :: forall (t :: Type) (a :: t) (b :: t).
+sym :: forall t (a :: t) (b :: t).
        a :~: b -> b :~: a
 sym eq = withSomeSing eq $ \(singEq :: Sing r) ->
            (~>:~:) @t @a @b @(WhySymSym1 a) @r singEq Refl
 
-hsym :: forall (j :: Type) (k :: Type) (a :: j) (b :: k).
+hsym :: forall j k (a :: j) (b :: k).
         a :~~: b -> b :~~: a
 hsym eq = withSomeSing eq $ \(singEq :: Sing r) ->
             (~>:~~:) @j @k @a @b @(WhyHsymSym1 a) @r singEq HRefl
 
-symIdempotent :: forall (t :: Type) (a :: t) (b :: t)
+symIdempotent :: forall t (a :: t) (b :: t)
                         (e :: a :~: b).
                  Sing e -> Symmetry (Symmetry e) :~: e
 symIdempotent se = (~>:~:) @t @a @b @(WhySymIdempotentSym1 a) @e se Refl
 
-hsymIdempotent :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
+hsymIdempotent :: forall j k (a :: j) (b :: k)
                          (e :: a :~~: b).
                   Sing e -> Hsymmetry (Hsymmetry e) :~: e
 hsymIdempotent se = (~>:~~:) @j @k @a @b @(WhyHsymIdempotentSym1 a) @e se Refl
 
-replace :: forall (t :: Type) (from :: t) (to :: t) (p :: t ~> Type).
+replace :: forall t (from :: t) (to :: t) (p :: t ~> Type).
            p @@ from
         -> from :~: to
         -> p @@ to
@@ -95,8 +95,8 @@ replace from eq =
 
 -- Doesn't work due to https://ghc.haskell.org/trac/ghc/ticket/11719
 {-
-hreplace :: forall (j :: Type) (k :: Type) (from :: j) (to :: k)
-                   (p :: forall (z :: Type). z ~> Type).
+hreplace :: forall j k (from :: j) (to :: k)
+                   (p :: forall z. z ~> Type).
             p @@ from
          -> from :~~: to
          -> p @@ to
@@ -105,13 +105,13 @@ hreplace from heq =
     (@~>:~~:) @j @k @from @to @(WhyHreplaceSym2 from p) singEq from
 -}
 
-leibniz :: forall (t :: Type) (f :: t ~> Type) (a :: t) (b :: t).
+leibniz :: forall t (f :: t ~> Type) (a :: t) (b :: t).
            a :~: b
         -> f @@ a
         -> f @@ b
 leibniz = replace @t @a @b @(WhyLeibnizSym2 f a) id
 
-cong :: forall (x :: Type) (y :: Type) (f :: x ~> y)
+cong :: forall x y (f :: x ~> y)
                (a :: x) (b :: x).
         a :~: b
      -> f @@ a :~: f @@ b
@@ -119,10 +119,10 @@ cong eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
     (~>:~:) @x @a @b @(WhyCongSym2 f a) @r singEq Refl
 
-eqIsRefl :: forall (k :: Type) (a :: k) (b :: k) (e :: a :~: b).
+eqIsRefl :: forall k (a :: k) (b :: k) (e :: a :~: b).
             Sing e -> e :~~: (Refl :: a :~: a)
 eqIsRefl eq = (~>:~:) @k @a @b @(WhyEqIsReflSym1 a) @e eq HRefl
 
-heqIsHRefl :: forall (j :: Type) (k :: Type) (a :: j) (b :: k) (e :: a :~~: b).
+heqIsHRefl :: forall j k (a :: j) (b :: k) (e :: a :~~: b).
               Sing e -> e :~~: (HRefl :: a :~~: a)
 heqIsHRefl heq = (~>:~~:) @j @k @a @b @(WhyHEqIsHReflSym1 a) @e heq HRefl

@@ -16,7 +16,7 @@ import           Data.Kind
 import           Data.Singletons.TH
 import           Data.Type.Equality ((:~:)(..), (:~~:)(..))
 
-data instance Sing (z :: a :~: b) where
+data instance Sing :: forall k (a :: k) (b :: k). a :~: b -> Type where
   SRefl :: Sing Refl
 type (%:~:) = (Sing :: (a :: k) :~: (b :: k) -> Type)
 
@@ -29,7 +29,7 @@ instance SingI Refl where
   sing = SRefl
 
 -- | Christine Paulin-Mohring's version of the J rule.
-(~>:~:) :: forall (k :: Type) (a :: k) (b :: k)
+(~>:~:) :: forall k (a :: k) (b :: k)
                   (p :: forall (y :: k). a :~: y ~> Type)
                   (r :: a :~: b).
            Sing r
@@ -37,7 +37,7 @@ instance SingI Refl where
         -> p @@ r
 (~>:~:) SRefl pRefl = pRefl
 
-data instance Sing (z :: a :~~: b) where
+data instance Sing :: forall j k (a :: j) (b :: k). a :~~: b -> Type where
   SHRefl :: Sing HRefl
 type (%:~~:) = (Sing :: (a :: j) :~~: (b :: k) -> Type)
 
@@ -50,8 +50,8 @@ instance SingI HRefl where
   sing = SHRefl
 
 -- | Christine Paulin-Mohring's version of the J rule, but heterogeneously kinded.
-(~>:~~:) :: forall (j :: Type) (k :: Type) (a :: j) (b :: k)
-                   (p :: forall (z :: Type) (y :: z). a :~~: y ~> Type)
+(~>:~~:) :: forall j k (a :: j) (b :: k)
+                   (p :: forall z (y :: z). a :~~: y ~> Type)
                    (r :: a :~~: b).
             Sing r
          -> p @@ HRefl
@@ -85,7 +85,7 @@ $(singletons [d|
 
   -- Doesn't work due to https://ghc.haskell.org/trac/ghc/ticket/11719
   {-
-  type family WhyHreplace (from :: j) (p :: forall (z :: Type). z ~> Type)
+  type family WhyHreplace (from :: j) (p :: forall z. z ~> Type)
                           (e :: from :~~: (y :: k)) :: Type where
     WhyHreplace from p (_ :: from :~~: y) = p @@ y
   -}

@@ -10,7 +10,6 @@
 module ListSpec where
 
 import Data.Eliminator
-import Data.Kind
 import Data.Singletons.Prelude
 import Data.Singletons.Prelude.List
 import Data.Type.Equality
@@ -29,7 +28,7 @@ spec = pure ()
 
 -----
 
-mapPreservesLength :: forall (x :: Type) (y :: Type) (f :: x ~> y) (l :: [x]).
+mapPreservesLength :: forall x y (f :: x ~> y) (l :: [x]).
                       SingI l
                    => Length l :~: Length (Map f l)
 mapPreservesLength
@@ -44,7 +43,7 @@ mapPreservesLength
          -> WhyMapPreservesLength f (s:ss)
     step _ _ = cong @_ @_ @((+@#@$$) 1)
 
-mapFusion :: forall (x :: Type) (y :: Type) (z :: Type)
+mapFusion :: forall x y z
                     (f :: y ~> z) (g :: x ~> y) (l :: [x]).
                     SingI l
                  => Map f (Map g l) :~: Map (f .@#@$$$ g) l

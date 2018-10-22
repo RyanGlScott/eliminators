@@ -23,7 +23,7 @@ data Decision' p a
   = Proved a
   | Disproved (p @@ a @@ Void)
 
-elimDecision :: forall (a :: Type) (p :: PDecision a ~> Type) (d :: PDecision a).
+elimDecision :: forall a (p :: PDecision a ~> Type) (d :: PDecision a).
                 Sing d
              -> (forall (yes :: a). Sing yes -> p @@ (Proved yes))
              -> (forall (no :: a ~> Void). Sing no -> p @@ (Disproved no))
@@ -40,7 +40,7 @@ instance Show a => Show (Decision' p a) where
 type Decision  = Decision' (TyCon (->))
 type PDecision = Decision' (~>@#@$)
 
-data instance Sing (z :: PDecision a) where
+data instance Sing :: forall a. PDecision a -> Type where
   -- It would be lovely to not have to write those (:: PDecision a) kind
   -- ascriptions in the return types of each constructor.
   -- See https://ghc.haskell.org/trac/ghc/ticket/14111.

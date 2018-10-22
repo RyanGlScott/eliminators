@@ -26,7 +26,7 @@ deriving instance Eq a   => Eq (Vec a n)
 deriving instance Ord a  => Ord (Vec a n)
 deriving instance Show a => Show (Vec a n)
 
-data instance Sing (z :: Vec a n) where
+data instance Sing :: forall a (n :: Nat). Vec a n -> Type where
   SVNil :: Sing VNil
   (:%#) :: { sVhead :: Sing x, sVtail :: Sing xs } -> Sing (x :# xs)
 type SVec = (Sing :: Vec a n -> Type)
@@ -48,7 +48,7 @@ instance SingI VNil where
 instance (SingI x, SingI xs) => SingI (x :# xs) where
   sing = sing :%# sing
 
-elimVec :: forall (a :: Type) (n :: Nat)
+elimVec :: forall a (n :: Nat)
                   (p :: forall (k :: Nat). Vec a k ~> Type) (v :: Vec a n).
            Sing v
         -> p @@ VNil
@@ -59,24 +59,24 @@ elimVec SVNil pVNil _ = pVNil
 elimVec (sx :%# (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
   pVCons sx sxs (elimVec @a @k @p @xs sxs pVNil pVCons)
 
-type WhyMapVec (a :: Type) (b :: Type) (n :: Nat) = Vec a n -> Vec b n
+type WhyMapVec a b (n :: Nat) = Vec a n -> Vec b n
 $(genDefunSymbols [''WhyMapVec])
 
-type WhyZipWithVec (a :: Type) (b :: Type) (c :: Type) (n :: Nat)
+type WhyZipWithVec a b c (n :: Nat)
   = Vec a n -> Vec b n -> Vec c n
 $(genDefunSymbols [''WhyZipWithVec])
 
-type WhyAppendVec (e :: Type) (m :: Nat) (n :: Nat)
+type WhyAppendVec e (m :: Nat) (n :: Nat)
   = Vec e n -> Vec e m -> Vec e (n + m)
 $(genDefunSymbols [''WhyAppendVec])
 
-type WhyTransposeVec (e :: Type) (m :: Nat) (n :: Nat)
+type WhyTransposeVec e (m :: Nat) (n :: Nat)
   = Vec (Vec e m) n -> Vec (Vec e n) m
 $(genDefunSymbols [''WhyTransposeVec])
 
-type WhyConcatVec (e :: Type) (j :: Nat) (n :: Nat) (l :: Vec (Vec e j) n)
+type WhyConcatVec e (j :: Nat) (n :: Nat) (l :: Vec (Vec e j) n)
   = Vec e (n * j)
-data WhyConcatVecSym (e :: Type) (j :: Nat)
+data WhyConcatVecSym e (j :: Nat)
   :: forall (n :: Nat). Vec (Vec e j) n ~> Type
 type instance Apply (WhyConcatVecSym e j :: Vec (Vec e j) n ~> Type) l
   = WhyConcatVec e j n l
