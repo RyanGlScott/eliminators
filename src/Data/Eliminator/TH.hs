@@ -29,7 +29,7 @@ import           Data.Singletons.Prelude
 
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Datatype
-import           Language.Haskell.TH.Desugar (tupleNameDegree_maybe, unboxedTupleNameDegree_maybe)
+import           Language.Haskell.TH.Desugar hiding (NewOrData(..))
 
 {- $conventions
 'deriveElim' and 'deriveElimNamed' provide a way to automate the creation of
@@ -162,8 +162,9 @@ deriveElimNamed funName dataName = do
     Newtype         -> pure ()
   predVar <- newName "p"
   singVar <- newName "s"
+  dvars   <- traverse desugar vars
   let elimN = mkName funName
-      dataVarBndrs = catMaybes $ map typeToTyVarBndr vars
+      dataVarBndrs = map sweeten $ toposortTyVarsOf dvars
       promDataKind = datatypeType info
       predVarBndr = KindedTV predVar (InfixT promDataKind ''(~>) (ConT ''Kind.Type))
       singVarBndr = KindedTV singVar promDataKind
@@ -283,10 +284,6 @@ eliminatorName n
   = "~>" ++ nStr
   where
     nStr = nameBase n
-
-typeToTyVarBndr :: Type -> Maybe TyVarBndr
-typeToTyVarBndr (SigT (VarT n) k) = Just $ KindedTV n k
-typeToTyVarBndr _                 = Nothing
 
 -- Reconstruct and arrow type from the list of types
 ravel :: [Type] -> Type -> Type
