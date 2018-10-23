@@ -17,6 +17,7 @@ import Data.Kind (Type)
 import Data.Nat
 import Data.Singletons.Prelude.Num
 import Data.Singletons.TH
+import Internal
 
 data Vec :: Type -> Nat -> Type where
   VNil :: Vec a Z
@@ -58,6 +59,15 @@ elimVec :: forall a (n :: Nat)
 elimVec SVNil pVNil _ = pVNil
 elimVec (sx :%# (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
   pVCons sx sxs (elimVec @a @k @p @xs sxs pVNil pVCons)
+
+elimPropVec :: forall a (n :: Nat) (p :: Nat ~> Prop).
+               Vec a n
+            -> p @@ Z
+            -> (forall (k :: Nat). a -> Vec a k -> p @@ k -> p @@ S k)
+            -> p @@ n
+elimPropVec VNil pZ _ = pZ
+elimPropVec (x :# (xs :: Vec a k)) pZ pS =
+  pS x xs (elimPropVec @a @k @p xs pZ pS)
 
 $(singletons [d|
   type WhyMapVec a b (n :: Nat) = Vec a n -> Vec b n

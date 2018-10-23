@@ -16,6 +16,7 @@ import qualified Data.Type.Equality as DTE
 import           Data.Type.Equality ((:~:)(..), (:~~:)(..))
 
 import           EqualityTypes
+import           Internal
 
 import           Test.Hspec
 
@@ -41,13 +42,27 @@ j :: forall k (a :: k) (b :: k)
   -> p @@ r
 j SRefl pRefl = pRefl @a
 
+jProp :: forall k (a :: k) (b :: k)
+                (p :: k ~> k ~> Prop).
+         a :~: b
+      -> (forall (x :: k). p @@ x @@ x)
+      -> p @@ a @@ b
+jProp Refl pRefl = pRefl @a
+
 hj :: forall j k (a :: j) (b :: k)
              (p :: forall y z (w :: y) (x :: z). w :~~: x ~> Type)
              (r :: a :~~: b).
       Sing r
    -> (forall y (w :: y). p @@ (HRefl :: w :~~: w))
    -> p @@ r
-hj SHRefl pHRefl = pHRefl @k @a
+hj SHRefl pHRefl = pHRefl @j @a
+
+hjProp :: forall j k (a :: j) (b :: k)
+                 (p :: forall y z. y ~> z ~> Prop).
+          a :~~: b
+       -> (forall y (w :: y). p @@ w @@ w)
+       -> p @@ a @@ b
+hjProp HRefl pHRefl = pHRefl @j @a
 
 k :: forall k (a :: k)
             (p :: a :~: a ~> Type)

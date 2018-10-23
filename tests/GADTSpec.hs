@@ -12,6 +12,8 @@ module GADTSpec where
 import Data.Kind
 import Data.Singletons
 
+import Internal
+
 import Test.Hspec
 
 main :: IO ()
@@ -29,11 +31,18 @@ data instance Sing :: forall (what :: Bool). So what -> Type where
   SOh :: Sing Oh
 type SSo = (Sing :: So what -> Type)
 
-elimSo :: forall (what :: Bool) (s :: So what) (p :: forall (long_sucker :: Bool). So long_sucker ~> Type).
+elimSo :: forall (what :: Bool) (s :: So what)
+                 (p :: forall (long_sucker :: Bool). So long_sucker ~> Type).
           Sing s
        -> p @@ Oh
        -> p @@ s
 elimSo SOh pOh = pOh
+
+elimPropSo :: forall (what :: Bool) (p :: Bool ~> Prop).
+              So what
+           -> p @@ True
+           -> p @@ what
+elimPropSo Oh pOh = pOh
 
 data Flarble :: Type -> Type -> Type where
   MkFlarble1 :: a -> Flarble a b
@@ -58,6 +67,19 @@ elimFlarble s@SMkFlarble2 _ pMkFlarble2 =
   case s of
     (_ :: Sing (MkFlarble2 :: Flarble Bool (Maybe b'))) -> pMkFlarble2 @b'
 
+elimPropFlarble :: forall (a :: Type) (b :: Type)
+                          (p :: Type ~> Type ~> Prop).
+                   Flarble a b
+                -> (forall a' b'. a -> p @@ a' @@ b')
+                -> (forall b'. p @@ Bool @@ Maybe b')
+                -> p @@ a @@ b
+elimPropFlarble f@(MkFlarble1 x) pMkFlarble1 _ =
+  case f of
+    (_ :: Flarble a' b') -> pMkFlarble1 @a' @b' x
+elimPropFlarble f@MkFlarble2 _ pMkFlarble2 =
+  case f of
+    (_ :: Flarble Bool (Maybe b')) -> pMkFlarble2 @b'
+
 data Obj :: Type where
   MkObj :: o -> Obj
 
@@ -70,3 +92,9 @@ elimObj :: forall (o :: Obj) (p :: Obj ~> Type).
         -> (forall obj (x :: obj). Sing x -> p @@ (MkObj x))
         -> p @@ o
 elimObj (SMkObj (x :: Sing (obj :: obiwan))) pMkObj = pMkObj @obiwan @obj x
+
+elimPropObj :: forall (p :: Prop).
+               Obj
+            -> (forall obj. obj -> p)
+            -> p
+elimPropObj (MkObj o) pMkObj = pMkObj o

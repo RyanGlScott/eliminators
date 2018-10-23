@@ -16,6 +16,8 @@ import           Data.Kind
 import           Data.Singletons.TH
 import           Data.Type.Equality ((:~:)(..), (:~~:)(..))
 
+import           Internal
+
 data instance Sing :: forall k (a :: k) (b :: k). a :~: b -> Type where
   SRefl :: Sing Refl
 type (%:~:) = (Sing :: (a :: k) :~: (b :: k) -> Type)
@@ -37,6 +39,13 @@ instance SingI Refl where
         -> p @@ r
 (~>:~:) SRefl pRefl = pRefl
 
+(~>!:~:) :: forall k (a :: k) (b :: k)
+                   (p :: k ~> Prop).
+            a :~: b
+         -> p @@ a
+         -> p @@ b
+(~>!:~:) Refl pRefl = pRefl
+
 data instance Sing :: forall j k (a :: j) (b :: k). a :~~: b -> Type where
   SHRefl :: Sing HRefl
 type (%:~~:) = (Sing :: (a :: j) :~~: (b :: k) -> Type)
@@ -57,6 +66,13 @@ instance SingI HRefl where
          -> p @@ HRefl
          -> p @@ r
 (~>:~~:) SHRefl pHRefl = pHRefl
+
+(~>!:~~:) :: forall j k (a :: j) (b :: k)
+                    (p :: forall z. z ~> Prop).
+             a :~~: b
+          -> p @@ a
+          -> p @@ b
+(~>!:~~:) HRefl pHRefl = pHRefl
 
 -----
 
