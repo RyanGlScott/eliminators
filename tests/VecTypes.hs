@@ -59,24 +59,18 @@ elimVec SVNil pVNil _ = pVNil
 elimVec (sx :%# (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
   pVCons sx sxs (elimVec @a @k @p @xs sxs pVNil pVCons)
 
-type WhyMapVec a b (n :: Nat) = Vec a n -> Vec b n
-$(genDefunSymbols [''WhyMapVec])
+$(singletons [d|
+  type WhyMapVec a b (n :: Nat) = Vec a n -> Vec b n
 
-type WhyZipWithVec a b c (n :: Nat)
-  = Vec a n -> Vec b n -> Vec c n
-$(genDefunSymbols [''WhyZipWithVec])
+  type WhyZipWithVec a b c (n :: Nat)
+    = Vec a n -> Vec b n -> Vec c n
 
-type WhyAppendVec e (m :: Nat) (n :: Nat)
-  = Vec e n -> Vec e m -> Vec e (n + m)
-$(genDefunSymbols [''WhyAppendVec])
+  type WhyAppendVec e (m :: Nat) (n :: Nat)
+    = Vec e n -> Vec e m -> Vec e (n + m)
 
-type WhyTransposeVec e (m :: Nat) (n :: Nat)
-  = Vec (Vec e m) n -> Vec (Vec e n) m
-$(genDefunSymbols [''WhyTransposeVec])
+  type WhyTransposeVec e (m :: Nat) (n :: Nat)
+    = Vec (Vec e m) n -> Vec (Vec e n) m
 
-type WhyConcatVec e (j :: Nat) (n :: Nat) (l :: Vec (Vec e j) n)
-  = Vec e (n * j)
-data WhyConcatVecSym e (j :: Nat)
-  :: forall (n :: Nat). Vec (Vec e j) n ~> Type
-type instance Apply (WhyConcatVecSym e j :: Vec (Vec e j) n ~> Type) l
-  = WhyConcatVec e j n l
+  type family WhyConcatVec e (j :: Nat) (l :: Vec (Vec e j) n) :: Type where
+    WhyConcatVec e j (l :: Vec (Vec e j) n) = Vec e (n * j)
+  |])

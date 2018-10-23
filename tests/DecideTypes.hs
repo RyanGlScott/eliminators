@@ -54,46 +54,41 @@ instance SingKind a => SingKind (PDecision a) where
   toSing (Proved x)    = withSomeSing x $ SomeSing . SProved
   toSing (Disproved r) = withSomeSing r $ SomeSing . SDisproved
 
-type family NatEqConsequences (a :: Nat) (b :: Nat) :: Type where
-  NatEqConsequences Z      Z      = ()
-  NatEqConsequences Z      (S _)  = Void
-  NatEqConsequences (S _)  Z      = Void
-  NatEqConsequences (S k1) (S k2) = k1 :~: k2
-$(genDefunSymbols [''NatEqConsequences])
+$(singletons [d|
+  type family NatEqConsequences (a :: Nat) (b :: Nat) :: Type where
+    NatEqConsequences Z      Z      = ()
+    NatEqConsequences Z      (S _)  = Void
+    NatEqConsequences (S _)  Z      = Void
+    NatEqConsequences (S k1) (S k2) = k1 :~: k2
 
-type WhyNatEqConsequencesSame (a :: Nat) = NatEqConsequences a a
-$(genDefunSymbols [''WhyNatEqConsequencesSame])
+  type WhyNatEqConsequencesSame (a :: Nat) = NatEqConsequences a a
 
-type WhyDecEqZ (k :: Nat) = Decision (Z :~: k)
-$(genDefunSymbols [''WhyDecEqZ])
+  type WhyDecEqZ (k :: Nat) = Decision (Z :~: k)
 
-type WhyDecEqS (n :: Nat) (k :: Nat) = Decision (S n :~: k)
-$(genDefunSymbols [''WhyDecEqS])
+  type WhyDecEqS (n :: Nat) (k :: Nat) = Decision (S n :~: k)
+  |])
 
 -- The newtype wrapper is needed to work around
 -- https://github.com/goldfirere/singletons/issues/198
 newtype WhyDecEqNat (k :: Nat) = WhyDecEqNat
   { runWhyDecEqNat :: forall (j :: Nat). Sing j -> Decision (k :~: j) }
 
-type family ListEqConsequences (xxs :: [e]) (yys :: [e]) :: Type where
-  ListEqConsequences '[]    '[]    = ()
-  ListEqConsequences '[]    (_:_)  = Void
-  ListEqConsequences (_:_)  '[]    = Void
-  ListEqConsequences (x:xs) (y:ys) = (x :~: y, xs :~: ys)
-$(genDefunSymbols [''ListEqConsequences])
+$(singletons [d|
+  type family ListEqConsequences (xxs :: [e]) (yys :: [e]) :: Type where
+    ListEqConsequences '[]    '[]    = ()
+    ListEqConsequences '[]    (_:_)  = Void
+    ListEqConsequences (_:_)  '[]    = Void
+    ListEqConsequences (x:xs) (y:ys) = (x :~: y, xs :~: ys)
 
-type WhyListEqConsequencesSame (es :: [e]) = ListEqConsequences es es
-$(genDefunSymbols [''WhyListEqConsequencesSame])
+  type WhyListEqConsequencesSame (es :: [e]) = ListEqConsequences es es
 
-type WhyDecEqNil (es :: [e]) = Decision ('[] :~: es)
-$(genDefunSymbols [''WhyDecEqNil])
+  type WhyDecEqNil (es :: [e]) = Decision ('[] :~: es)
 
-type WhyDecEqCons (x :: e) (xs :: [e]) (es :: [e]) = Decision ((x:xs) :~: es)
-$(genDefunSymbols [''WhyDecEqCons])
+  type WhyDecEqCons (x :: e) (xs :: [e]) (es :: [e]) = Decision ((x:xs) :~: es)
 
-type WhyIntermixListEqs1 (x :: e) (xs :: [e]) (ys :: [e]) (k :: e) = (x:xs) :~: (k:ys)
-type WhyIntermixListEqs2 (x :: e) (xs :: [e]) (k :: [e])           = (x:xs) :~: (x:k)
-$(genDefunSymbols [''WhyIntermixListEqs1, ''WhyIntermixListEqs2])
+  type WhyIntermixListEqs1 (x :: e) (xs :: [e]) (ys :: [e]) (k :: e) = (x:xs) :~: (k:ys)
+  type WhyIntermixListEqs2 (x :: e) (xs :: [e]) (k :: [e])           = (x:xs) :~: (x:k)
+  |])
 
 -- The newtype wrapper is needed to work around
 -- https://github.com/goldfirere/singletons/issues/198
