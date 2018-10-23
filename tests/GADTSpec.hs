@@ -89,9 +89,9 @@ type SObj = (Sing :: Obj -> Type)
 
 elimObj :: forall (o :: Obj) (p :: Obj ~> Type).
            Sing o
-        -> (forall obj (x :: obj). Sing x -> p @@ (MkObj x))
+        -> (forall obj (x :: obj). Sing x -> p @@ MkObj x)
         -> p @@ o
-elimObj (SMkObj (x :: Sing (obj :: obiwan))) pMkObj = pMkObj @obiwan @obj x
+elimObj (SMkObj (sx :: Sing (x :: obj))) pMkObj = pMkObj @obj @x sx
 
 elimPropObj :: forall (p :: Prop).
                Obj

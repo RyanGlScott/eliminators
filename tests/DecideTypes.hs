@@ -25,8 +25,8 @@ data Decision' p a
 
 elimDecision :: forall a (p :: PDecision a ~> Type) (d :: PDecision a).
                 Sing d
-             -> (forall (yes :: a). Sing yes -> p @@ (Proved yes))
-             -> (forall (no :: a ~> Void). Sing no -> p @@ (Disproved no))
+             -> (forall (yes :: a). Sing yes -> p @@ Proved yes)
+             -> (forall (no :: a ~> Void). Sing no -> p @@ Disproved no)
              -> p @@ d
 elimDecision (SProved yes)   pProved _          = pProved yes
 elimDecision (SDisproved no) _       pDisproved = pDisproved no
