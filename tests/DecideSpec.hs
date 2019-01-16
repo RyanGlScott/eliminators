@@ -93,7 +93,7 @@ decCongS sn dNJ = withSomeSing dNJ $ \(sDNJ :: Sing d) ->
     right no = Disproved $ fromSing no . sInjective @n @j sn
 
 decEqNat :: forall (n :: Nat) (j :: Nat). Sing n -> Sing j -> Decision (n :~: j)
-decEqNat sn = runWhyDecEqNat (elimNat @(TyCon WhyDecEqNat) @n sn base step)
+decEqNat sn = runWhyDecEqNat $ elimNat @(TyCon WhyDecEqNat) @n sn base step
   where
     base :: WhyDecEqNat Z
     base = WhyDecEqNat decEqZ
@@ -197,7 +197,7 @@ decEqList :: forall e (es1 :: [e]) (es2 :: [e]).
              (forall (e1 :: e) (e2 :: e).
                      Sing e1 -> Sing e2 -> Decision (e1 :~: e2))
           -> Sing es1 -> Sing es2 -> Decision (es1 :~: es2)
-decEqList f ses1 = runWhyDecEqList (elimList @e @(TyCon1 WhyDecEqList) @es1 ses1 base step)
+decEqList f ses1 = runWhyDecEqList $ elimList @e @(TyCon1 WhyDecEqList) @es1 ses1 base step
   where
     base :: WhyDecEqList '[]
     base = WhyDecEqList decEqNil

@@ -40,12 +40,10 @@ instance Show a => Show (Decision' p a) where
 type Decision  = Decision' (TyCon (->))
 type PDecision = Decision' (~>@#@$)
 
-data instance Sing :: forall a. PDecision a -> Type where
-  -- It would be lovely to not have to write those (:: PDecision a) kind
-  -- ascriptions in the return types of each constructor.
-  -- See https://ghc.haskell.org/trac/ghc/ticket/14111.
-  SProved    :: forall a (x :: a).         Sing x -> Sing (Proved x    :: PDecision a)
-  SDisproved :: forall a (r :: a ~> Void). Sing r -> Sing (Disproved r :: PDecision a)
+data SDecision :: forall a. PDecision a -> Type where
+  SProved    :: forall a (x :: a).         Sing x -> SDecision (Proved x)
+  SDisproved :: forall a (r :: a ~> Void). Sing r -> SDecision (Disproved r)
+type instance Sing = SDecision
 
 instance SingKind a => SingKind (PDecision a) where
   type Demote (PDecision a) = Decision (Demote a)
@@ -53,6 +51,15 @@ instance SingKind a => SingKind (PDecision a) where
   fromSing (SDisproved r) = Disproved (fromSing r)
   toSing (Proved x)    = withSomeSing x $ SomeSing . SProved
   toSing (Disproved r) = withSomeSing r $ SomeSing . SDisproved
+
+-----
+
+-- These newtype wrappers are needed to work around
+-- https://gitlab.haskell.org/ghc/ghc/issues/9269
+newtype WhyDecEqNat (k :: Nat) = WhyDecEqNat
+  { runWhyDecEqNat :: forall (j :: Nat). Sing j -> Decision (k :~: j) }
+newtype WhyDecEqList (l1 :: [e]) = WhyDecEqList
+  { runWhyDecEqList :: forall (l2 :: [e]). Sing l2 -> Decision (l1 :~: l2) }
 
 $(singletons [d|
   type family NatEqConsequences (a :: Nat) (b :: Nat) :: Type where
@@ -66,14 +73,7 @@ $(singletons [d|
   type WhyDecEqZ (k :: Nat) = Decision (Z :~: k)
 
   type WhyDecEqS (n :: Nat) (k :: Nat) = Decision (S n :~: k)
-  |])
 
--- The newtype wrapper is needed to work around
--- https://github.com/goldfirere/singletons/issues/198
-newtype WhyDecEqNat (k :: Nat) = WhyDecEqNat
-  { runWhyDecEqNat :: forall (j :: Nat). Sing j -> Decision (k :~: j) }
-
-$(singletons [d|
   type family ListEqConsequences (xxs :: [e]) (yys :: [e]) :: Type where
     ListEqConsequences '[]    '[]    = ()
     ListEqConsequences '[]    (_:_)  = Void
@@ -89,8 +89,3 @@ $(singletons [d|
   type WhyIntermixListEqs1 (x :: e) (xs :: [e]) (ys :: [e]) (k :: e) = (x:xs) :~: (k:ys)
   type WhyIntermixListEqs2 (x :: e) (xs :: [e]) (k :: [e])           = (x:xs) :~: (x:k)
   |])
-
--- The newtype wrapper is needed to work around
--- https://github.com/goldfirere/singletons/issues/198
-newtype WhyDecEqList (l1 :: [e]) = WhyDecEqList
-  { runWhyDecEqList :: forall (l2 :: [e]). Sing l2 -> Decision (l1 :~: l2) }

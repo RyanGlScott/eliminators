@@ -23,7 +23,6 @@ import           Control.Monad
 import           Data.Char (isUpper)
 import           Data.Foldable
 import qualified Data.Kind as Kind (Type)
-import           Data.List.NonEmpty (NonEmpty(..))
 import           Data.Maybe
 import           Data.Singletons.Prelude
 
@@ -247,7 +246,7 @@ caseClause dataName elimN bndrNamesPrefix conIndex numCons
 mbInductiveCase :: Name -> Type -> a -> Maybe a
 mbInductiveCase dataName varType inductiveArg
   = case unfoldType varType of
-      headTy :| _
+      (headTy, _)
           -- Annoying special case for lists
         | ListT <- headTy
         , dataName == ''[]
@@ -295,26 +294,6 @@ foldExp = foldl' AppE
 -- apply an expression to a list of types
 foldAppType :: Exp -> [Type] -> Exp
 foldAppType = foldl' AppTypeE
-
--- | Decompose an applied type into its individual components. For example, this:
---
--- @
--- Either Int Char
--- @
---
--- would be unfolded to this:
---
--- @
--- Either :| [Int, Char]
--- @
-unfoldType :: Type -> NonEmpty Type
-unfoldType = go []
-  where
-    go :: [Type] -> Type -> NonEmpty Type
-    go acc (AppT t1 t2)    = go (t2:acc) t1
-    go acc (SigT t _)      = go acc t
-    go acc (ForallT _ _ t) = go acc t
-    go acc t               = t :| acc
 
 tyVarBndrName :: TyVarBndr -> Name
 tyVarBndrName (PlainTV  n)   = n

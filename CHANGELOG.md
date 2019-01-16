@@ -1,3 +1,6 @@
+## next [????.??.??]
+* Require `singletons-2.6` and GHC 8.8.
+
 ### 0.5.1 [2019.04.26]
 * Support `th-abstraction-0.3.0.0` or later.
 

@@ -27,10 +27,10 @@ deriving instance Eq a   => Eq (Vec a n)
 deriving instance Ord a  => Ord (Vec a n)
 deriving instance Show a => Show (Vec a n)
 
-data instance Sing :: forall a (n :: Nat). Vec a n -> Type where
-  SVNil :: Sing VNil
-  (:%#) :: { sVhead :: Sing x, sVtail :: Sing xs } -> Sing (x :# xs)
-type SVec = (Sing :: Vec a n -> Type)
+data SVec :: forall a (n :: Nat). Vec a n -> Type where
+  SVNil :: SVec VNil
+  (:%#) :: { sVhead :: Sing x, sVtail :: Sing xs } -> SVec (x :# xs)
+type instance Sing = SVec
 infixr 5 :%#
 
 instance SingKind a => SingKind (Vec a n) where
@@ -70,17 +70,18 @@ elimPropVec (x :# (xs :: Vec a k)) pZ pS =
   pS x xs (elimPropVec @a @p @k xs pZ pS)
 
 $(singletons [d|
-  type WhyMapVec a b (n :: Nat) = Vec a n -> Vec b n
+  type WhyMapVec a b (n :: Nat) =
+    Vec a n -> Vec b n
 
-  type WhyZipWithVec a b c (n :: Nat)
-    = Vec a n -> Vec b n -> Vec c n
+  type WhyZipWithVec a b c (n :: Nat) =
+    Vec a n -> Vec b n -> Vec c n
 
-  type WhyAppendVec e (m :: Nat) (n :: Nat)
-    = Vec e n -> Vec e m -> Vec e (n + m)
+  type WhyAppendVec e (m :: Nat) (n :: Nat) =
+    Vec e n -> Vec e m -> Vec e (n + m)
 
-  type WhyTransposeVec e (m :: Nat) (n :: Nat)
-    = Vec (Vec e m) n -> Vec (Vec e n) m
+  type WhyTransposeVec e (m :: Nat) (n :: Nat) =
+    Vec (Vec e m) n -> Vec (Vec e n) m
 
-  type family WhyConcatVec e (j :: Nat) (l :: Vec (Vec e j) n) :: Type where
-    WhyConcatVec e j (l :: Vec (Vec e j) n) = Vec e (n * j)
+  type WhyConcatVec e (j :: Nat) (l :: Vec (Vec e j) n) =
+    Vec e (n * j) :: Type
   |])

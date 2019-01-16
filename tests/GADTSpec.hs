@@ -27,9 +27,9 @@ spec = pure ()
 data So :: Bool -> Type where
   Oh :: So True
 
-data instance Sing :: forall (what :: Bool). So what -> Type where
-  SOh :: Sing Oh
-type SSo = (Sing :: So what -> Type)
+data SSo :: forall (what :: Bool). So what -> Type where
+  SOh :: SSo Oh
+type instance Sing = SSo
 
 elimSo :: forall (p :: forall (long_sucker :: Bool). So long_sucker ~> Type)
                  (what :: Bool) (s :: So what).
@@ -48,10 +48,10 @@ data Flarble :: Type -> Type -> Type where
   MkFlarble1 :: a -> Flarble a b
   MkFlarble2 :: a ~ Bool => Flarble a (Maybe b)
 
-data instance Sing :: forall a b. Flarble a b -> Type where
-  SMkFlarble1 :: Sing x -> Sing (MkFlarble1 x)
-  SMkFlarble2 :: Sing MkFlarble2
-type SFlarble = (Sing :: Flarble a b -> Type)
+data SFlarble :: forall a b. Flarble a b -> Type where
+  SMkFlarble1 :: Sing x -> SFlarble (MkFlarble1 x)
+  SMkFlarble2 :: SFlarble MkFlarble2
+type instance Sing = SFlarble
 
 elimFlarble :: forall (p :: forall x y. Flarble x y ~> Type)
                       a b (f :: Flarble a b).
@@ -81,9 +81,9 @@ elimPropFlarble f@MkFlarble2 _ pMkFlarble2 =
 data Obj :: Type where
   MkObj :: o -> Obj
 
-data instance Sing :: Obj -> Type where
-  SMkObj :: forall obiwan (obj :: obiwan). Sing obj -> Sing (MkObj obj)
-type SObj = (Sing :: Obj -> Type)
+data SObj :: Obj -> Type where
+  SMkObj :: forall obiwan (obj :: obiwan). Sing obj -> SObj (MkObj obj)
+type instance Sing = SObj
 
 elimObj :: forall (p :: Obj ~> Type) (o :: Obj).
            Sing o

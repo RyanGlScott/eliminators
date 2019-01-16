@@ -48,7 +48,7 @@ import Data.Eliminator.TH
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.Nat
 import Data.Singletons.Prelude
-import Data.Singletons.Prelude.List.NonEmpty (Sing(..))
+import Data.Singletons.Prelude.List.NonEmpty (SNonEmpty(..))
 import Data.Void (Void)
 
 import Language.Haskell.TH.Desugar (tupleNameDegree_maybe)
