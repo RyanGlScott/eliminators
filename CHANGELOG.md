@@ -1,3 +1,6 @@
+### next [????.??.??]
+* Support `th-abstraction-0.3.0.0` or later.
+
 ## 0.5 [2018.09.18]
 * Require `singletons-2.5` and GHC 8.6.
 
