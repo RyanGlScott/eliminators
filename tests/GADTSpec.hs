@@ -31,14 +31,14 @@ data instance Sing :: forall (what :: Bool). So what -> Type where
   SOh :: Sing Oh
 type SSo = (Sing :: So what -> Type)
 
-elimSo :: forall (what :: Bool) (s :: So what)
-                 (p :: forall (long_sucker :: Bool). So long_sucker ~> Type).
+elimSo :: forall (p :: forall (long_sucker :: Bool). So long_sucker ~> Type)
+                 (what :: Bool) (s :: So what).
           Sing s
        -> p @@ Oh
        -> p @@ s
 elimSo SOh pOh = pOh
 
-elimPropSo :: forall (what :: Bool) (p :: Bool ~> Prop).
+elimPropSo :: forall (p :: Bool ~> Prop) (what :: Bool).
               So what
            -> p @@ True
            -> p @@ what
@@ -53,9 +53,8 @@ data instance Sing :: forall a b. Flarble a b -> Type where
   SMkFlarble2 :: Sing MkFlarble2
 type SFlarble = (Sing :: Flarble a b -> Type)
 
-elimFlarble :: forall a b
-                      (p :: forall x y. Flarble x y ~> Type)
-                      (f :: Flarble a b).
+elimFlarble :: forall (p :: forall x y. Flarble x y ~> Type)
+                      a b (f :: Flarble a b).
                Sing f
             -> (forall a' b' (x :: a'). Sing x -> p @@ (MkFlarble1 x :: Flarble a' b'))
             -> (forall b'. p @@ (MkFlarble2 :: Flarble Bool (Maybe b')))
@@ -67,8 +66,7 @@ elimFlarble s@SMkFlarble2 _ pMkFlarble2 =
   case s of
     (_ :: Sing (MkFlarble2 :: Flarble Bool (Maybe b'))) -> pMkFlarble2 @b'
 
-elimPropFlarble :: forall (a :: Type) (b :: Type)
-                          (p :: Type ~> Type ~> Prop).
+elimPropFlarble :: forall (p :: Type ~> Type ~> Prop) a b.
                    Flarble a b
                 -> (forall a' b'. a -> p @@ a' @@ b')
                 -> (forall b'. p @@ Bool @@ Maybe b')
@@ -87,7 +85,7 @@ data instance Sing :: Obj -> Type where
   SMkObj :: forall obiwan (obj :: obiwan). Sing obj -> Sing (MkObj obj)
 type SObj = (Sing :: Obj -> Type)
 
-elimObj :: forall (o :: Obj) (p :: Obj ~> Type).
+elimObj :: forall (p :: Obj ~> Type) (o :: Obj).
            Sing o
         -> (forall obj (x :: obj). Sing x -> p @@ MkObj x)
         -> p @@ o

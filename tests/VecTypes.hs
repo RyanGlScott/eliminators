@@ -49,8 +49,8 @@ instance SingI VNil where
 instance (SingI x, SingI xs) => SingI (x :# xs) where
   sing = sing :%# sing
 
-elimVec :: forall a (n :: Nat)
-                  (p :: forall (k :: Nat). Vec a k ~> Type) (v :: Vec a n).
+elimVec :: forall a (p :: forall (k :: Nat). Vec a k ~> Type)
+                  (n :: Nat) (v :: Vec a n).
            Sing v
         -> p @@ VNil
         -> (forall (k :: Nat) (x :: a) (xs :: Vec a k).
@@ -58,16 +58,16 @@ elimVec :: forall a (n :: Nat)
         -> p @@ v
 elimVec SVNil pVNil _ = pVNil
 elimVec (sx :%# (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
-  pVCons sx sxs (elimVec @a @k @p @xs sxs pVNil pVCons)
+  pVCons sx sxs (elimVec @a @p @k @xs sxs pVNil pVCons)
 
-elimPropVec :: forall a (n :: Nat) (p :: Nat ~> Prop).
+elimPropVec :: forall a (p :: Nat ~> Prop) (n :: Nat).
                Vec a n
             -> p @@ Z
             -> (forall (k :: Nat). a -> Vec a k -> p @@ k -> p @@ S k)
             -> p @@ n
 elimPropVec VNil pZ _ = pZ
 elimPropVec (x :# (xs :: Vec a k)) pZ pS =
-  pS x xs (elimPropVec @a @k @p xs pZ pS)
+  pS x xs (elimPropVec @a @p @k xs pZ pS)
 
 $(singletons [d|
   type WhyMapVec a b (n :: Nat) = Vec a n -> Vec b n

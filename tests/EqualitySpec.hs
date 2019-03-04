@@ -34,31 +34,31 @@ spec = parallel $ do
 
 -----
 
-j :: forall k (a :: k) (b :: k)
-            (p :: forall (x :: k) (y :: k). x :~: y ~> Type)
+j :: forall k (p :: forall (x :: k) (y :: k). x :~: y ~> Type)
+            (a :: k) (b :: k)
             (r :: a :~: b).
      Sing r
   -> (forall (x :: k). p @@ (Refl :: x :~: x))
   -> p @@ r
 j SRefl pRefl = pRefl @a
 
-jProp :: forall k (a :: k) (b :: k)
-                (p :: k ~> k ~> Prop).
+jProp :: forall k (p :: k ~> k ~> Prop)
+                (a :: k) (b :: k).
          a :~: b
       -> (forall (x :: k). p @@ x @@ x)
       -> p @@ a @@ b
 jProp Refl pRefl = pRefl @a
 
-hj :: forall j k (a :: j) (b :: k)
-             (p :: forall y z (w :: y) (x :: z). w :~~: x ~> Type)
+hj :: forall (p :: forall y z (w :: y) (x :: z). w :~~: x ~> Type)
+             j k (a :: j) (b :: k)
              (r :: a :~~: b).
       Sing r
    -> (forall y (w :: y). p @@ (HRefl :: w :~~: w))
    -> p @@ r
 hj SHRefl pHRefl = pHRefl @j @a
 
-hjProp :: forall j k (a :: j) (b :: k)
-                 (p :: forall y z. y ~> z ~> Prop).
+hjProp :: forall (p :: forall y z. y ~> z ~> Prop)
+                 j k (a :: j) (b :: k).
           a :~~: b
        -> (forall y (w :: y). p @@ w @@ w)
        -> p @@ a @@ b
@@ -83,22 +83,22 @@ hk SHRefl pHRefl = pHRefl
 sym :: forall t (a :: t) (b :: t).
        a :~: b -> b :~: a
 sym eq = withSomeSing eq $ \(singEq :: Sing r) ->
-           (~>:~:) @t @a @b @(WhySymSym1 a) @r singEq Refl
+           (~>:~:) @t @a @(WhySymSym1 a) @b @r singEq Refl
 
 hsym :: forall j k (a :: j) (b :: k).
         a :~~: b -> b :~~: a
 hsym eq = withSomeSing eq $ \(singEq :: Sing r) ->
-            (~>:~~:) @j @k @a @b @(WhyHsymSym1 a) @r singEq HRefl
+            (~>:~~:) @j @a @(WhyHsymSym1 a) @k @b @r singEq HRefl
 
 symIdempotent :: forall t (a :: t) (b :: t)
                         (e :: a :~: b).
                  Sing e -> Symmetry (Symmetry e) :~: e
-symIdempotent se = (~>:~:) @t @a @b @(WhySymIdempotentSym1 a) @e se Refl
+symIdempotent se = (~>:~:) @t @a @(WhySymIdempotentSym1 a) @b @e se Refl
 
 hsymIdempotent :: forall j k (a :: j) (b :: k)
                          (e :: a :~~: b).
                   Sing e -> Hsymmetry (Hsymmetry e) :~: e
-hsymIdempotent se = (~>:~~:) @j @k @a @b @(WhyHsymIdempotentSym1 a) @e se Refl
+hsymIdempotent se = (~>:~~:) @j @a @(WhyHsymIdempotentSym1 a) @k @b @e se Refl
 
 replace :: forall t (from :: t) (to :: t) (p :: t ~> Type).
            p @@ from
@@ -106,7 +106,7 @@ replace :: forall t (from :: t) (to :: t) (p :: t ~> Type).
         -> p @@ to
 replace from eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
-    (~>:~:) @t @from @to @(WhyReplaceSym2 from p) @r singEq from
+    (~>:~:) @t @from @(WhyReplaceSym2 from p) @to @r singEq from
 
 -- Doesn't work due to https://ghc.haskell.org/trac/ghc/ticket/11719
 {-
@@ -116,8 +116,8 @@ hreplace :: forall j k (from :: j) (to :: k)
          -> from :~~: to
          -> p @@ to
 hreplace from heq =
-  withSomeSing eq $ \(singEq :: Sing r) ->
-    (@~>:~~:) @j @k @from @to @(WhyHreplaceSym2 from p) singEq from
+  withSomeSing heq $ \(singEq :: Sing r) ->
+    (~>:~~:) @j @from @(WhyHreplaceSym2 from p) @k @to @r singEq from
 -}
 
 leibniz :: forall t (f :: t ~> Type) (a :: t) (b :: t).
@@ -132,12 +132,12 @@ cong :: forall x y (f :: x ~> y)
      -> f @@ a :~: f @@ b
 cong eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
-    (~>:~:) @x @a @b @(WhyCongSym2 f a) @r singEq Refl
+    (~>:~:) @x @a @(WhyCongSym2 f a) @b @r singEq Refl
 
 eqIsRefl :: forall k (a :: k) (b :: k) (e :: a :~: b).
             Sing e -> e :~~: (Refl :: a :~: a)
-eqIsRefl eq = (~>:~:) @k @a @b @(WhyEqIsReflSym1 a) @e eq HRefl
+eqIsRefl eq = (~>:~:) @k @a @(WhyEqIsReflSym1 a) @b @e eq HRefl
 
 heqIsHRefl :: forall j k (a :: j) (b :: k) (e :: a :~~: b).
               Sing e -> e :~~: (HRefl :: a :~~: a)
-heqIsHRefl heq = (~>:~~:) @j @k @a @b @(WhyHEqIsHReflSym1 a) @e heq HRefl
+heqIsHRefl heq = (~>:~~:) @j @a @(WhyHEqIsHReflSym1 a) @k @b @e heq HRefl

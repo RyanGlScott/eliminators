@@ -133,7 +133,7 @@ concatVec :: forall e (n :: Nat) (j :: Nat).
              (SingKind e, SingI j, e ~ Demote e)
           => Vec (Vec e j) n -> Vec e (n * j)
 concatVec l = withSomeSing l $ \(singL :: Sing l) ->
-                elimVec @(Vec e j) @n @(WhyConcatVecSym2 e j) @l singL base step
+                elimVec @(Vec e j) @(WhyConcatVecSym2 e j) @n @l singL base step
   where
     base :: WhyConcatVec e j VNil
     base = VNil

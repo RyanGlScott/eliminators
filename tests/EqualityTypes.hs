@@ -31,16 +31,17 @@ instance SingI Refl where
   sing = SRefl
 
 -- | Christine Paulin-Mohring's version of the J rule.
-(~>:~:) :: forall k (a :: k) (b :: k)
+(~>:~:) :: forall k (a :: k)
                   (p :: forall (y :: k). a :~: y ~> Type)
-                  (r :: a :~: b).
+                  (b :: k) (r :: a :~: b).
            Sing r
         -> p @@ Refl
         -> p @@ r
 (~>:~:) SRefl pRefl = pRefl
 
-(~>!:~:) :: forall k (a :: k) (b :: k)
-                   (p :: k ~> Prop).
+(~>!:~:) :: forall k (a :: k)
+                   (p :: k ~> Prop)
+                   (b :: k).
             a :~: b
          -> p @@ a
          -> p @@ b
@@ -59,16 +60,17 @@ instance SingI HRefl where
   sing = SHRefl
 
 -- | Christine Paulin-Mohring's version of the J rule, but heterogeneously kinded.
-(~>:~~:) :: forall j k (a :: j) (b :: k)
+(~>:~~:) :: forall j (a :: j)
                    (p :: forall z (y :: z). a :~~: y ~> Type)
-                   (r :: a :~~: b).
+                   k (b :: k) (r :: a :~~: b).
             Sing r
          -> p @@ HRefl
          -> p @@ r
 (~>:~~:) SHRefl pHRefl = pHRefl
 
-(~>!:~~:) :: forall j k (a :: j) (b :: k)
-                    (p :: forall z. z ~> Prop).
+(~>!:~~:) :: forall j (a :: j)
+                    (p :: forall z. z ~> Prop)
+                    k (b :: k).
              a :~~: b
           -> p @@ a
           -> p @@ b
