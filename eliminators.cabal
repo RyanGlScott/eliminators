@@ -16,7 +16,7 @@ category:            Dependent Types
 build-type:          Simple
 extra-source-files:  CHANGELOG.md, README.md
 cabal-version:       >=1.10
-tested-with:         GHC == 8.6.4
+tested-with:         GHC == 8.6.5
                    , GHC == 8.8.1
 
 source-repository head
