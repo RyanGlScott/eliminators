@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Unsafe #-}
 {-|
@@ -150,12 +149,7 @@ deriveElim dataName = deriveElimNamed (eliminatorName dataName) dataName
 -- function named @funName@ for the datatype @dataName@.
 deriveElimNamed :: String -> Name -> Q [Dec]
 deriveElimNamed funName dataName = do
-  info@(DatatypeInfo { datatypeVars    =
-#if MIN_VERSION_th_abstraction(0,3,0)
-                                         dataVarBndrs
-#else
-                                         dataVars
-#endif
+  info@(DatatypeInfo { datatypeVars    = dataVarBndrs
                      , datatypeVariant = variant
                      , datatypeCons    = cons
                      }) <- reifyDatatype dataName
@@ -169,9 +163,6 @@ deriveElimNamed funName dataName = do
   predVar <- newName "p"
   singVar <- newName "s"
   let elimN = mkName funName
-#if !(MIN_VERSION_th_abstraction(0,3,0))
-      dataVarBndrs = freeVariablesWellScoped dataVars
-#endif
       promDataKind = datatypeType info
       predVarBndr = KindedTV predVar (InfixT promDataKind ''(~>) (ConT ''Kind.Type))
       singVarBndr = KindedTV singVar promDataKind
