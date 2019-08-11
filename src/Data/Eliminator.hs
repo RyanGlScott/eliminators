@@ -7,11 +7,13 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneKindSignatures #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-|
 Module:      Data.Eliminator
 Copyright:   (C) 2017 Ryan Scott
@@ -26,35 +28,65 @@ module Data.Eliminator (
     -- * Eliminator functions
     -- $eliminators
     elimAll
+  , ElimAll
   , elimAny
+  , ElimAny
   , elimArg
+  , ElimArg
   , elimBool
+  , ElimBool
   , elimConst
+  , ElimConst
   , elimDown
+  , ElimDown
   , elimDual
+  , ElimDual
   , elimEither
+  , ElimEither
   , elimFirst
+  , ElimFirst
   , elimIdentity
+  , ElimIdentity
   , elimLast
+  , ElimLast
   , elimList
+  , ElimList
   , elimMax
+  , ElimMax
   , elimMaybe
+  , ElimMaybe
   , elimMin
+  , ElimMin
   , elimNat
+  , ElimNat
   , elimNonEmpty
+  , ElimNonEmpty
   , elimOption
+  , ElimOption
   , elimOrdering
+  , ElimOrdering
   , elimProduct
+  , ElimProduct
   , elimSum
+  , ElimSum
   , elimTuple0
+  , ElimTuple0
   , elimTuple2
+  , ElimTuple2
   , elimTuple3
+  , ElimTuple3
   , elimTuple4
+  , ElimTuple4
   , elimTuple5
+  , ElimTuple5
   , elimTuple6
+  , ElimTuple6
   , elimTuple7
+  , ElimTuple7
   , elimVoid
+  , ElimVoid
   , elimWrappedMonoid
+  , ElimWrappedMonoid
   ) where
 
 import Control.Monad.Extra
@@ -96,7 +128,7 @@ The naming conventions are:
   with @~>@ prepended.
 -}
 
-$(concatMapM deriveElim
+$(concatMapM (\n -> (++) <$> deriveElim n <*> deriveTypeElim n)
              [ ''All
              , ''Any
              , ''Arg
@@ -120,10 +152,13 @@ $(concatMapM deriveElim
              , ''Void
              , ''WrappedMonoid
              ])
-$(deriveElimNamed "elimList" ''[])
+$(deriveElimNamed     "elimList" ''[])
+$(deriveTypeElimNamed "ElimList" ''[])
 $(concatMapM (\n -> do deg <- fromMaybeM (fail $ "Internal error: "
                                               ++ nameBase n
                                               ++ " is not the name of a tuple")
                                          (pure $ tupleNameDegree_maybe n)
-                       deriveElimNamed ("elimTuple" ++ show deg) n)
+                       terms <- deriveElimNamed     ("elimTuple" ++ show deg) n
+                       types <- deriveTypeElimNamed ("ElimTuple" ++ show deg) n
+                       pure $ terms ++ types)
              [''(), ''(,), ''(,,), ''(,,,), ''(,,,,), ''(,,,,,), ''(,,,,,,)])

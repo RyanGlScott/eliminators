@@ -16,7 +16,7 @@ category:            Dependent Types
 build-type:          Simple
 extra-source-files:  CHANGELOG.md, README.md
 cabal-version:       >=1.10
-tested-with:         GHC == 8.8.1
+tested-with:         GHC == 8.10.1
 
 source-repository head
   type:                git
@@ -26,13 +26,13 @@ library
   exposed-modules:     Data.Eliminator
                        Data.Eliminator.TH
                        Data.Eliminator.TypeNats
-  build-depends:       base             >= 4.13  && < 4.14
+  build-depends:       base             >= 4.14  && < 4.15
                      , extra            >= 1.4.2 && < 1.8
-                     , singletons       >= 2.6   && < 2.7
+                     , singletons       >= 2.7   && < 2.8
                      , singleton-nats   >= 0.4.2 && < 0.5
-                     , template-haskell >= 2.15  && < 2.16
+                     , template-haskell >= 2.16  && < 2.17
                      , th-abstraction   >= 0.3   && < 0.4
-                     , th-desugar       >= 1.10  && < 1.11
+                     , th-desugar       >= 1.11  && < 1.12
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall -Wcompat -Wno-unticked-promoted-constructors
@@ -46,14 +46,16 @@ test-suite spec
                        EqualityTypes
                        GADTSpec
                        Internal
+                       MatchabilizeSpec
+                       MatchabilizeTypes
                        ListSpec
                        ListTypes
                        VecTypes
                        VecSpec
-  build-depends:       base           >= 4.13  && < 4.14
+  build-depends:       base           >= 4.14  && < 4.15
                      , eliminators
                      , hspec          >= 2     && < 3
-                     , singletons     >= 2.6   && < 2.7
+                     , singletons     >= 2.7   && < 2.8
                      , singleton-nats >= 0.4.2 && < 0.5
   build-tool-depends:  hspec-discover:hspec-discover
   hs-source-dirs:      tests

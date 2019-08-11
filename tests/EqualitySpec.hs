@@ -86,41 +86,41 @@ hk SHRefl pHRefl = pHRefl
 sym :: forall t (a :: t) (b :: t).
        a :~: b -> b :~: a
 sym eq = withSomeSing eq $ \(singEq :: Sing r) ->
-           (~>:~:) @t @a @(WhySymSym1 a) @b @r singEq Refl
+           (~>:~:) @t @a @WhySymSym0 @b @r singEq Refl
 
 sSym :: forall t (a :: t) (b :: t) (e :: a :~: b).
         Sing e -> Sing (Symmetry e)
-sSym se = (~>:~:) @t @a @(WhySSymSym1 a) @b @e se SRefl
+sSym se = (~>:~:) @t @a @WhySSymSym0 @b @e se SRefl
 
 hsym :: forall j k (a :: j) (b :: k).
         a :~~: b -> b :~~: a
 hsym eq = withSomeSing eq $ \(singEq :: Sing r) ->
-            (~>:~~:) @j @a @(WhyHSymSym1 a) @k @b @r singEq HRefl
+            (~>:~~:) @j @a @WhyHSymSym0 @k @b @r singEq HRefl
 
 sHSym :: forall j k (a :: j) (b :: k) (e :: a :~~: b).
          Sing e -> Sing (HSymmetry e)
-sHSym se = (~>:~~:) @j @a @(WhySHSymSym1 a) @k @b @e se SHRefl
+sHSym se = (~>:~~:) @j @a @WhySHSymSym0 @k @b @e se SHRefl
 
 symIdempotent :: forall t (a :: t) (b :: t)
                         (e :: a :~: b).
                  Sing e -> Symmetry (Symmetry e) :~: e
-symIdempotent se = (~>:~:) @t @a @(WhySymIdempotentSym1 a) @b @e se Refl
+symIdempotent se = (~>:~:) @t @a @WhySymIdempotentSym0 @b @e se Refl
 
 hsymIdempotent :: forall j k (a :: j) (b :: k)
                          (e :: a :~~: b).
                   Sing e -> HSymmetry (HSymmetry e) :~: e
-hsymIdempotent se = (~>:~~:) @j @a @(WhyHSymIdempotentSym1 a) @k @b @e se Refl
+hsymIdempotent se = (~>:~~:) @j @a @WhyHSymIdempotentSym0 @k @b @e se Refl
 
 trans :: forall t (a :: t) (b :: t) (c :: t).
                 a :~: b -> b :~: c -> a :~: c
 trans eq1 eq2 = withSomeSing eq1 $ \(singEq1 :: Sing r) ->
-                  unwrapTrans ((~>:~:) @t @a @(WhyTransSym1 a) @b @r
+                  unwrapTrans ((~>:~:) @t @a @WrappedTransSym0 @b @r
                                        singEq1 (WrapTrans id)) eq2
 
 htrans :: forall j k l (a :: j) (b :: k) (c :: l).
                  a :~~: b -> b :~~: c -> a :~~: c
 htrans eq1 eq2 = withSomeSing eq1 $ \(singEq1 :: Sing r) ->
-                   unwrapHTrans ((~>:~~:) @j @a @(WhyHTransSym1 a) @k @b @r
+                   unwrapHTrans ((~>:~~:) @j @a @WrappedHTransSym0 @k @b @r
                                           singEq1 (WrapHTrans id)) eq2
 
 replace :: forall t (from :: t) (to :: t) (p :: t ~> Type).
@@ -158,45 +158,45 @@ cong :: forall x y (f :: x ~> y)
      -> f @@ a :~: f @@ b
 cong eq =
   withSomeSing eq $ \(singEq :: Sing r) ->
-    (~>:~:) @x @a @(WhyCongSym2 f a) @b @r singEq Refl
+    (~>:~:) @x @a @(WhyCongSym1 f) @b @r singEq Refl
 
 eqIsRefl :: forall k (a :: k) (b :: k) (e :: a :~: b).
             Sing e -> e :~~: (Refl :: a :~: a)
-eqIsRefl eq = (~>:~:) @k @a @(WhyEqIsReflSym1 a) @b @e eq HRefl
+eqIsRefl eq = (~>:~:) @k @a @WhyEqIsReflSym0 @b @e eq HRefl
 
 heqIsHRefl :: forall j k (a :: j) (b :: k) (e :: a :~~: b).
               Sing e -> e :~~: (HRefl :: a :~~: a)
-heqIsHRefl heq = (~>:~~:) @j @a @(WhyHEqIsHReflSym1 a) @k @b @e heq HRefl
+heqIsHRefl heq = (~>:~~:) @j @a @WhyHEqIsHReflSym0 @k @b @e heq HRefl
 
 transLeft :: forall j (a :: j) (b :: j) (e :: a :~: b).
              Sing e -> Trans e Refl :~: e
-transLeft se = leibniz @(a :~: b) @(WhyTransLeftSym1 a)
+transLeft se = leibniz @(a :~: b) @WhyTransLeftSym0
                        @(Symmetry (Symmetry e)) @e
                        (symIdempotent se) transLeftHelper
   where
     transLeftHelper :: Trans (Symmetry (Symmetry e)) Refl
                    :~: Symmetry (Symmetry e)
-    transLeftHelper = (~>:~:) @j @b @(WhyTransLeftHelperSym1 b) @a @(Symmetry e)
+    transLeftHelper = (~>:~:) @j @b @WhyTransLeftHelperSym0 @a @(Symmetry e)
                               (sSym se) Refl
 
 htransLeft :: forall j k (a :: j) (b :: k) (e :: a :~~: b).
               Sing e -> HTrans e HRefl :~: e
-htransLeft se = leibniz @(a :~~: b) @(WhyHTransLeftSym1 a)
+htransLeft se = leibniz @(a :~~: b) @WhyHTransLeftSym0
                         @(HSymmetry (HSymmetry e)) @e
                         (hsymIdempotent se) htransLeftHelper
   where
     htransLeftHelper :: HTrans (HSymmetry (HSymmetry e)) HRefl
                     :~: HSymmetry (HSymmetry e)
-    htransLeftHelper = (~>:~~:) @k @b @(WhyHTransLeftHelperSym1 b) @j @a @(HSymmetry e)
+    htransLeftHelper = (~>:~~:) @k @b @WhyHTransLeftHelperSym0 @j @a @(HSymmetry e)
                                 (sHSym se) Refl
 
 transRight :: forall j (a :: j) (b :: j) (e :: a :~: b).
               Sing e -> Trans Refl e :~: e
-transRight se = (~>:~:) @j @a @(WhyTransRightSym1 a) @b @e se Refl
+transRight se = (~>:~:) @j @a @WhyTransRightSym0 @b @e se Refl
 
 htransRight :: forall j k (a :: j) (b :: k) (e :: a :~~: b).
                Sing e -> HTrans HRefl e :~: e
-htransRight se = (~>:~~:) @j @a @(WhyHTransRightSym1 a) @k @b @e se Refl
+htransRight se = (~>:~~:) @j @a @WhyHTransRightSym0 @k @b @e se Refl
 
 -- Commented out for now, since these take ages to compile :(
 -- Perhaps https://gitlab.haskell.org/ghc/ghc/merge_requests/611 will make
@@ -205,7 +205,7 @@ htransRight se = (~>:~~:) @j @a @(WhyHTransRightSym1 a) @k @b @e se Refl
 sTrans :: forall t (a :: t) (b :: t) (c :: t)
                    (e1 :: a :~: b) (e2 :: b :~: c).
           Sing e1 -> Sing e2 -> Sing (Trans e1 e2)
-sTrans se1 = unwrapSTrans $ (~>:~:) @t @a @(WhySTransSym1 a) @b @e1
+sTrans se1 = unwrapSTrans $ (~>:~:) @t @a @WhySTransSym0 @b @e1
                                     se1 (WrapSTrans sTransHelper)
   where
     sTransHelper :: forall (z :: t) (e' :: a :~: z).
@@ -216,7 +216,7 @@ sTrans se1 = unwrapSTrans $ (~>:~:) @t @a @(WhySTransSym1 a) @b @e1
 sHTrans :: forall j k l (a :: j) (b :: k) (c :: l)
                   (e1 :: a :~~: b) (e2 :: b :~~: c).
            Sing e1 -> Sing e2 -> Sing (HTrans e1 e2)
-sHTrans se1 = unwrapSHTrans $ (~>:~~:) @j @a @(WhySHTransSym1 a) @k @b @e1
+sHTrans se1 = unwrapSHTrans $ (~>:~~:) @j @a @WhySHTransSym0 @k @b @e1
                                        se1 (WrapSHTrans sHTransHelper)
   where
     sHTransHelper :: forall m (z :: m) (e' :: a :~~: z).

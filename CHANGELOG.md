@@ -1,4 +1,7 @@
 ## next [????.??.??]
+* Require `singletons-2.7` and GHC 8.10.
+* Add experimental support for generating type-level eliminators through the
+  `deriveTypeElim` and `deriveTypeElimNamed` functions.
 * Add eliminators for `All`, `Any`, `Arg`, `Const`, `Down`, `Dual`, `First`,
   `Identity`, `Last`, `Max`, `Min`, `Option`, `Product`, `Sum`,
   and `WrappedMonoid`.
