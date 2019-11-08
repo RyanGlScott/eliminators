@@ -1,3 +1,8 @@
+## next [????.??.??]
+* Add eliminators for `All`, `Any`, `Arg`, `Const`, `Down`, `Dual`, `First`,
+  `Identity`, `Last`, `Max`, `Min`, `Option`, `Product`, `Sum`,
+  and `WrappedMonoid`.
+
 ## 0.6 [2019.08.27]
 * Require `singletons-2.6` and GHC 8.8.
 
