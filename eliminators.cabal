@@ -27,7 +27,7 @@ library
                        Data.Eliminator.TH
                        Data.Eliminator.TypeNats
   build-depends:       base             >= 4.13  && < 4.14
-                     , extra            >= 1.4.2 && < 1.7
+                     , extra            >= 1.4.2 && < 1.8
                      , singletons       >= 2.6   && < 2.7
                      , singleton-nats   >= 0.4.2 && < 0.5
                      , template-haskell >= 2.15  && < 2.16
