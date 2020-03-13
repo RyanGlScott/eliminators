@@ -77,6 +77,7 @@ import Data.Singletons.Prelude.Ord (SDown(..))
 import Data.Singletons.Prelude.Semigroup
 import Data.Void (Void)
 
+import Language.Haskell.TH (nameBase)
 import Language.Haskell.TH.Desugar (tupleNameDegree_maybe)
 
 {- $eliminators
@@ -120,6 +121,9 @@ $(concatMapM deriveElim
              , ''WrappedMonoid
              ])
 $(deriveElimNamed "elimList" ''[])
-$(concatMapM (\n -> let Just deg = tupleNameDegree_maybe n
-                    in deriveElimNamed ("elimTuple" ++ show deg) n)
+$(concatMapM (\n -> do deg <- fromMaybeM (fail $ "Internal error: "
+                                              ++ nameBase n
+                                              ++ " is not the name of a tuple")
+                                         (pure $ tupleNameDegree_maybe n)
+                       deriveElimNamed ("elimTuple" ++ show deg) n)
              [''(), ''(,), ''(,,), ''(,,,), ''(,,,,), ''(,,,,,), ''(,,,,,,)])
