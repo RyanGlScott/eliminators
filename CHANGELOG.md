@@ -1,4 +1,4 @@
-## next [????.??.??]
+## 0.7 [2020.03.25]
 * Require `singletons-2.7` and GHC 8.10.
 * Add experimental support for generating type-level eliminators through the
   `deriveTypeElim` and `deriveTypeElimNamed` functions.
