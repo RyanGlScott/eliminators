@@ -23,16 +23,18 @@ source-repository head
   location:            https://github.com/RyanGlScott/eliminators
 
 library
-  exposed-modules:     Data.Eliminator
-                       Data.Eliminator.TH
-                       Data.Eliminator.TypeNats
+  -- TODO RGS: Temporary
+  -- exposed-modules:     Data.Eliminator
+  --                      Data.Eliminator.TH
+  --                      Data.Eliminator.TypeNats
   build-depends:       base             >= 4.14  && < 4.15
-                     , extra            >= 1.4.2 && < 1.8
-                     , singletons       >= 2.7   && < 2.8
-                     , singleton-nats   >= 0.4.2 && < 0.5
-                     , template-haskell >= 2.16  && < 2.17
-                     , th-abstraction   >= 0.3   && < 0.4
-                     , th-desugar       >= 1.11  && < 1.12
+                     -- TODO RGS: Temporary
+                     -- , extra            >= 1.4.2 && < 1.8
+                     -- , singletons       >= 2.7   && < 2.8
+                     -- , singleton-nats   >= 0.4.2 && < 0.5
+                     -- , template-haskell >= 2.16  && < 2.17
+                     -- , th-abstraction   >= 0.3   && < 0.4
+                     -- , th-desugar       >= 1.11  && < 1.12
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall -Wcompat -Wno-unticked-promoted-constructors
@@ -46,17 +48,24 @@ test-suite spec
                        EqualityTypes
                        GADTSpec
                        Internal
-                       MatchabilizeSpec
-                       MatchabilizeTypes
                        ListSpec
                        ListTypes
                        VecTypes
                        VecSpec
+
+                       -- TODO RGS: Temporary
+                       Data.Nat
+                       Data.Singletons
+                       Data.Singletons.Decide
+                       Data.Singletons.Prelude
+                       Data.Singletons.Prelude.List
+                       Data.Singletons.Prelude.Num
   build-depends:       base           >= 4.14  && < 4.15
                      , eliminators
                      , hspec          >= 2     && < 3
-                     , singletons     >= 2.7   && < 2.8
-                     , singleton-nats >= 0.4.2 && < 0.5
+                     -- TODO RGS: Temporary
+                     -- , singletons     >= 2.7   && < 2.8
+                     -- , singleton-nats >= 0.4.2 && < 0.5
   build-tool-depends:  hspec-discover:hspec-discover
   hs-source-dirs:      tests
   default-language:    Haskell2010

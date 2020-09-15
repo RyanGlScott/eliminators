@@ -7,17 +7,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE StandaloneKindSignatures #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UnsaturatedTypeFamilies #-}
 module VecTypes where
 
 import Data.Kind (Type)
 import Data.Nat
+import Data.Singletons
 import Data.Singletons.Prelude.Num
-import Data.Singletons.TH
 import Internal
 
 type Vec :: Type -> Nat -> Type
@@ -52,81 +52,79 @@ instance SingI VNil where
 instance (SingI x, SingI xs) => SingI (x :# xs) where
   sing = sing :%# sing
 
-elimVec :: forall a (p :: forall (k :: Nat). Vec a k ~> Type)
+elimVec :: forall {m} a (p :: forall (k :: Nat). Vec a k -> @m Type)
                   (n :: Nat) (v :: Vec a n).
            Sing v
-        -> p @@ VNil
+        -> p VNil
         -> (forall (k :: Nat) (x :: a) (xs :: Vec a k).
-                   Sing x -> Sing xs -> p @@ xs -> p @@ (x :# xs))
-        -> p @@ v
+                   Sing x -> Sing xs -> p xs -> p (x :# xs))
+        -> p v
 elimVec SVNil pVNil _ = pVNil
 elimVec (sx :%# (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
   pVCons sx sxs (elimVec @a @p @k @xs sxs pVNil pVCons)
 
 type ElimVec :: forall a.
-                forall (p :: forall (k :: Nat). Vec a k ~> Type)
+                forall (p :: forall (k :: Nat). Vec a k -> Type)
              -> forall (n :: Nat).
                 forall (v :: Vec a n)
-             -> p @@ VNil
+             -> p VNil
              -> (forall (k :: Nat).
                  forall (x :: a) (xs :: Vec a k) ->
-                 p @@ xs ~> p @@ (x :# xs))
-             -> p @@ v
+                 p xs -> p (x :# xs))
+             -> p v
 type family ElimVec p v pVNil pVCons where
-  forall a (p :: forall (k :: Nat). Vec a k ~> Type)
-         (pVNil :: p @@ VNil)
+  forall a (p :: forall (k :: Nat). Vec a k -> Type)
+         (pVNil :: p VNil)
          (pVCons :: forall (k :: Nat).
                     forall (x :: a) (xs :: Vec a k) ->
-                    p @@ xs ~> p @@ (x :# xs)).
+                    p xs -> p (x :# xs)).
     ElimVec p VNil pVNil pVCons = pVNil
-  forall a (p :: forall (k :: Nat). Vec a k ~> Type)
-         (pVNil :: p @@ VNil)
+  forall a (p :: forall (k :: Nat). Vec a k -> Type)
+         (pVNil :: p VNil)
          (pVCons :: forall (k :: Nat).
                     forall (x :: a) (xs :: Vec a k) ->
-                    p @@ xs ~> p @@ (x :# xs)) k x xs.
+                    p xs -> p (x :# xs)) k x xs.
     ElimVec p (x :# (xs :: Vec a k)) pVNil pVCons =
-      pVCons x xs @@ ElimVec @a p @k xs pVNil pVCons
+      pVCons x xs (ElimVec @a p @k xs pVNil pVCons)
 
-elimPropVec :: forall a (p :: Nat ~> Prop) (n :: Nat).
+elimPropVec :: forall {m} a (p :: Nat -> @m Prop) (n :: Nat).
                Vec a n
-            -> p @@ Z
-            -> (forall (k :: Nat). a -> Vec a k -> p @@ k -> p @@ S k)
-            -> p @@ n
+            -> p Z
+            -> (forall (k :: Nat). a -> Vec a k -> p k -> p (S k))
+            -> p n
 elimPropVec VNil pZ _ = pZ
 elimPropVec (x :# (xs :: Vec a k)) pZ pS =
   pS x xs (elimPropVec @a @p @k xs pZ pS)
 
 type ElimPropVec :: forall a.
-                    forall (p :: Nat ~> Prop)
+                    forall (p :: Nat -> Prop)
                  -> forall (n :: Nat).
                     Vec a n
-                 -> p @@ Z
-                 -> (forall (k :: Nat). a ~> Vec a k ~> p @@ k ~> p @@ S k)
-                 -> p @@ n
+                 -> p Z
+                 -> (forall (k :: Nat). a -> Vec a k -> p k -> p (S k))
+                 -> p n
 type family ElimPropVec p v pZ pS where
-  forall a (p :: Nat ~> Prop)
-         (pZ :: p @@ Z)
-         (pS :: forall (k :: Nat). a ~> Vec a k ~> p @@ k ~> p @@ S k).
+  forall a (p :: Nat -> Prop)
+         (pZ :: p Z)
+         (pS :: forall (k :: Nat). a -> Vec a k -> p k -> p (S k)).
     ElimPropVec p VNil pZ pS = pZ
-  forall a (p :: Nat ~> Prop)
-         (pZ :: p @@ Z)
-         (pS :: forall (k :: Nat). a ~> Vec a k ~> p @@ k ~> p @@ S k) k x xs.
+  forall a (p :: Nat -> Prop)
+         (pZ :: p Z)
+         (pS :: forall (k :: Nat). a -> Vec a k -> p k -> p (S k)) k x xs.
     ElimPropVec p (x :# (xs :: Vec a k)) pZ pS =
-      pS @@ x @@ xs @@ ElimPropVec @a p @k xs pZ pS
+      pS x xs (ElimPropVec @a p @k xs pZ pS)
 
-$(singletons [d|
-  type WhyMapVec :: Type -> Type -> Nat -> Type
-  type WhyMapVec a b n = Vec a n -> Vec b n
+type WhyMapVec :: Type -> Type -> Nat -> Type
+type WhyMapVec a b n = Vec a n -> Vec b n
 
-  type WhyZipWithVec :: Type -> Type -> Type -> Nat -> Type
-  type WhyZipWithVec a b c n = Vec a n -> Vec b n -> Vec c n
+type WhyZipWithVec :: Type -> Type -> Type -> Nat -> Type
+type WhyZipWithVec a b c n = Vec a n -> Vec b n -> Vec c n
 
-  type WhyAppendVec :: Type -> Nat -> Nat -> Type
-  type WhyAppendVec e m n = Vec e n -> Vec e m -> Vec e (n + m)
+type WhyAppendVec :: Type -> Nat -> Nat -> Type
+type WhyAppendVec e m n = Vec e n -> Vec e m -> Vec e (n + m)
 
-  type WhyTransposeVec :: Type -> Nat -> Nat -> Type
-  type WhyTransposeVec e m n = Vec (Vec e m) n -> Vec (Vec e n) m
+type WhyTransposeVec :: Type -> Nat -> Nat -> Type
+type WhyTransposeVec e m n = Vec (Vec e m) n -> Vec (Vec e n) m
 
-  type WhyConcatVec :: Vec (Vec e j) n -> Type
-  type WhyConcatVec (l :: Vec (Vec e j) n) = Vec e (n * j)
-  |])
+type WhyConcatVec :: Vec (Vec e j) n -> Type
+type WhyConcatVec (l :: Vec (Vec e j) n) = Vec e (n * j)

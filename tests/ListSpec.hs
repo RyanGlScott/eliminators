@@ -7,6 +7,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UnsaturatedTypeFamilies #-}
 module ListSpec where
 
 import Data.Eliminator
@@ -14,7 +15,7 @@ import Data.Singletons.Prelude
 import Data.Singletons.Prelude.List
 import Data.Type.Equality
 
-import EqualitySpec (cong)
+import EqualitySpec () -- (cong)
 
 import ListTypes
 
@@ -28,11 +29,12 @@ spec = pure ()
 
 -----
 
-mapPreservesLength :: forall x y (f :: x ~> y) (l :: [x]).
+{-
+mapPreservesLength :: forall {m} x y (f :: x -> @m y) (l :: [x]).
                       SingI l
                    => Length l :~: Length (Map f l)
 mapPreservesLength
-  = elimList @x @(WhyMapPreservesLengthSym1 f) @l (sing @l) base step
+  = elimList @x @(WhyMapPreservesLength f) @l (sing @l) base step
   where
     base :: WhyMapPreservesLength f '[]
     base = Refl
@@ -41,14 +43,14 @@ mapPreservesLength
             Sing s -> Sing ss
          -> WhyMapPreservesLength f ss
          -> WhyMapPreservesLength f (s:ss)
-    step _ _ = cong @_ @_ @((+@#@$$) 1)
+    step _ _ = cong @_ @_ @((+) 1)
 
-mapFusion :: forall x y z
-                    (f :: y ~> z) (g :: x ~> y) (l :: [x]).
+mapFusion :: forall {m} {n} x y z
+                    (f :: y -> @n z) (g :: x -> @m y) (l :: [x]).
                     SingI l
-                 => Map f (Map g l) :~: Map (f .@#@$$$ g) l
+                 => Map f (Map g l) :~: Map (f . g) l
 mapFusion
-  = elimList @x @(WhyMapFusionSym2 f g) @l (sing @l) base step
+  = elimList @x @(WhyMapFusion f g) @l (sing @l) base step
   where
     base :: WhyMapFusion f g '[]
     base = Refl
@@ -57,4 +59,5 @@ mapFusion
             Sing s -> Sing ss
          -> WhyMapFusion f g ss
          -> WhyMapFusion f g (s:ss)
-    step _ _ = cong @_ @_ @((:@#@$$) (f @@ (g @@ s)))
+    step _ _ = cong @_ @_ @((:) (f (g s)))
+-}

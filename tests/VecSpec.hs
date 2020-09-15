@@ -5,6 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UnsaturatedTypeFamilies #-}
 module VecSpec where
 
 import Data.Eliminator
@@ -58,6 +59,7 @@ spec = parallel $ do
                  :# ('b' :# 'e' :# VNil)
                  :# ('c' :# 'f' :# VNil)
                  :# VNil)
+  {-
   describe "concatVec" $ do
     it "concats a Vec of Vecs" $ do
       concatVec ((False :# True  :# False :# VNil)
@@ -65,12 +67,13 @@ spec = parallel $ do
               :# VNil)
         `shouldBe` (False :# True  :# False :# True
                           :# False :# True  :# VNil)
+  -}
 
 -----
 
 replicateVec :: forall e (howMany :: Nat).
                 Sing howMany -> e -> Vec e howMany
-replicateVec s e = elimNat @(TyCon (Vec e)) @howMany s VNil step
+replicateVec s e = elimNat @(Vec e) @howMany s VNil step
   where
     step :: forall (k :: Nat). Sing k -> Vec e k -> Vec e (S k)
     step _ = (e :#)
@@ -78,7 +81,7 @@ replicateVec s e = elimNat @(TyCon (Vec e)) @howMany s VNil step
 mapVec :: forall a b (n :: Nat).
           SingI n
        => (a -> b) -> Vec a n -> Vec b n
-mapVec f = elimNat @(WhyMapVecSym2 a b) @n (sing @n) base step
+mapVec f = elimNat @(WhyMapVec a b) @n (sing @n) base step
   where
     base :: WhyMapVec a b Z
     base _ = VNil
@@ -89,7 +92,7 @@ mapVec f = elimNat @(WhyMapVecSym2 a b) @n (sing @n) base step
 zipWithVec :: forall a b c (n :: Nat).
               SingI n
            => (a -> b -> c) -> Vec a n -> Vec b n -> Vec c n
-zipWithVec f = elimNat @(WhyZipWithVecSym3 a b c) @n (sing @n) base step
+zipWithVec f = elimNat @(WhyZipWithVec a b c) @n (sing @n) base step
   where
     base :: WhyZipWithVec a b c Z
     base _ _ = VNil
@@ -104,7 +107,7 @@ zipWithVec f = elimNat @(WhyZipWithVecSym3 a b c) @n (sing @n) base step
 appendVec :: forall e (n :: Nat) (m :: Nat).
              SingI n
           => Vec e n -> Vec e m -> Vec e (n + m)
-appendVec = elimNat @(WhyAppendVecSym2 e m) @n (sing @n) base step
+appendVec = elimNat @(WhyAppendVec e m) @n (sing @n) base step
   where
     base :: WhyAppendVec e m Z
     base _ = id
@@ -118,7 +121,7 @@ appendVec = elimNat @(WhyAppendVecSym2 e m) @n (sing @n) base step
 transposeVec :: forall e (n :: Nat) (m :: Nat).
                 (SingI n, SingI m)
              => Vec (Vec e m) n -> Vec (Vec e n) m
-transposeVec = elimNat @(WhyTransposeVecSym2 e m) @n (sing @n) base step
+transposeVec = elimNat @(WhyTransposeVec e m) @n (sing @n) base step
   where
     base :: WhyTransposeVec e m Z
     base _ = replicateVec (sing @m) VNil
@@ -129,11 +132,12 @@ transposeVec = elimNat @(WhyTransposeVecSym2 e m) @n (sing @n) base step
          -> WhyTransposeVec e m (S k)
     step _ transK vK = zipWithVec (:#) (vhead vK) (transK (vtail vK))
 
+{-
 concatVec :: forall e (n :: Nat) (j :: Nat).
              (SingKind e, SingI j, e ~ Demote e)
           => Vec (Vec e j) n -> Vec e (n * j)
 concatVec l = withSomeSing l $ \(singL :: Sing l) ->
-                elimVec @(Vec e j) @WhyConcatVecSym0 @n @l singL base step
+                elimVec @(Vec e j) @WhyConcatVec @n @l singL base step
   where
     base :: WhyConcatVec VNil
     base = VNil
@@ -143,3 +147,4 @@ concatVec l = withSomeSing l $ \(singL :: Sing l) ->
                 -> WhyConcatVec xs
                 -> WhyConcatVec (x :# xs)
     step h _ vKJ = appendVec (fromSing h) vKJ
+-}
