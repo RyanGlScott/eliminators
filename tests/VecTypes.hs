@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE PolyKinds #-}
@@ -16,25 +17,24 @@ module VecTypes where
 
 import Data.Kind (Type)
 import Data.Nat
-import Data.Singletons.Prelude.Num
-import Data.Singletons.TH
+import Data.Singletons.Base.TH
+import Data.Singletons.TH.Options
+
 import Internal
 
-type Vec :: Type -> Nat -> Type
-data Vec :: Type -> Nat -> Type where
-  VNil :: Vec a Z
-  (:#) :: { vhead :: a, vtail :: Vec a n } -> Vec a (S n)
-infixr 5 :#
+import Prelude.Singletons
+
+$(withOptions defaultOptions{genSingKindInsts = False} $
+  singletons [d|
+    type Vec :: Type -> Nat -> Type
+    data Vec a n where
+      VNil :: Vec a Z
+      (:#) :: { vhead :: a, vtail :: Vec a n } -> Vec a (S n)
+    infixr 5 :#
+  |])
 deriving instance Eq a   => Eq (Vec a n)
 deriving instance Ord a  => Ord (Vec a n)
 deriving instance Show a => Show (Vec a n)
-
-type SVec :: Vec a n -> Type
-data SVec v where
-  SVNil :: SVec VNil
-  (:%#) :: { sVhead :: Sing x, sVtail :: Sing xs } -> SVec (x :# xs)
-type instance Sing = SVec
-infixr 5 :%#
 
 instance SingKind a => SingKind (Vec a n) where
   type Demote (Vec a n) = Vec (Demote a) n
@@ -45,12 +45,6 @@ instance SingKind a => SingKind (Vec a n) where
     withSomeSing x $ \sx ->
       withSomeSing xs $ \sxs ->
         SomeSing $ sx :%# sxs
-
-instance SingI VNil where
-  sing = SVNil
-
-instance (SingI x, SingI xs) => SingI (x :# xs) where
-  sing = sing :%# sing
 
 elimVec :: forall a (p :: forall (k :: Nat). Vec a k ~> Type)
                   (n :: Nat) (v :: Vec a n).

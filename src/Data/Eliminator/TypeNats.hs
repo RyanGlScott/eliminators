@@ -20,8 +20,8 @@ module Data.Eliminator.TypeNats (elimNat) where
 
 import Data.Kind (Type)
 import Data.Singletons
-import Data.Singletons.TypeLits
 
+import GHC.TypeLits.Singletons
 import GHC.TypeNats
 
 import Unsafe.Coerce (unsafeCoerce)

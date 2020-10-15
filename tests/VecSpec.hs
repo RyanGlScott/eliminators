@@ -9,8 +9,8 @@ module VecSpec where
 
 import Data.Eliminator
 import Data.Nat
-import Data.Singletons
-import Data.Singletons.Prelude.Num
+
+import Prelude.Singletons
 
 import VecTypes
 

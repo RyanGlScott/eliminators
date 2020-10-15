@@ -33,12 +33,14 @@ import           Data.Foldable
 import qualified Data.Kind as Kind (Type)
 import           Data.Maybe
 import           Data.Proxy
-import           Data.Singletons.Prelude
 import           Data.Singletons.TH.Options
 
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Datatype
+import           Language.Haskell.TH.Datatype.TyVarBndr
 import           Language.Haskell.TH.Desugar hiding (NewOrData(..))
+
+import           Prelude.Singletons
 
 {- $term-conventions
 'deriveElim' and 'deriveElimNamed' provide a way to automate the creation of
@@ -288,8 +290,8 @@ deriveElimNamed' prox funName dataName = do
   singVar <- newName "s"
   let elimName = mkName funName
       promDataKind = datatypeType info
-      predVarBndr = KindedTV predVar (InfixT promDataKind ''(~>) (ConT ''Kind.Type))
-      singVarBndr = KindedTV singVar promDataKind
+      predVarBndr = kindedTV predVar (InfixT promDataKind ''(~>) (ConT ''Kind.Type))
+      singVarBndr = kindedTV singVar promDataKind
   caseTypes <- traverse (caseType prox dataName predVar) cons
   let returnType  = predType predVar (VarT singVar)
       elimType    = elimTypeSig prox dataVarBndrs predVarBndr singVarBndr
@@ -330,8 +332,8 @@ caseType prox dataName predVar
 caseClause ::
      Name            -- The name of the eliminator function
   -> Name            -- The name of the data type
-  -> [TyVarBndr]     -- The type variables bound by the data type
-  -> TyVarBndr       -- The predicate type variable
+  -> [TyVarBndrUnit] -- The type variables bound by the data type
+  -> TyVarBndrUnit   -- The predicate type variable
   -> Int             -- The index of this constructor (0-indexed)
   -> Int             -- The total number of data constructors
   -> ConstructorInfo -- The data constructor
@@ -375,8 +377,8 @@ caseClause elimName dataName dataVarBndrs predVarBndr conIndex numCons
 caseTySynEqn ::
      Name            -- The name of the eliminator function
   -> Name            -- The name of the data type
-  -> [TyVarBndr]     -- The type variables bound by the data type
-  -> TyVarBndr       -- The predicate type variable
+  -> [TyVarBndrUnit] -- The type variables bound by the data type
+  -> TyVarBndrUnit   -- The predicate type variable
   -> Int             -- The index of this constructor (0-indexed)
   -> [Type]          -- The types of each "case alternative" in the eliminator
                      -- function's type signature
@@ -394,7 +396,7 @@ caseTySynEqn elimName dataName dataVarBndrs predVarBndr conIndex caseTypes
                          let mkVarName
                                | i == conIndex = pure usedCaseVar
                                | otherwise     = newName ("_p" ++ show i)
-                         in liftA2 KindedTV mkVarName (pure caseTy)
+                         in liftA2 kindedTV mkVarName (pure caseTy)
        let caseVarNames = map tvName caseVarBndrs
            prefix       = foldAppKindT (ConT elimName) $ map VarT dataVarNames
            mbInductiveArg singVar varType =
@@ -405,7 +407,7 @@ caseTySynEqn elimName dataName dataVarBndrs predVarBndr conIndex caseTypes
            mkArg f (singVar, varType) =
              foldAppDefunT (f `AppT` VarT singVar)
                          $ maybeToList (mbInductiveArg singVar varType)
-           bndrs = dataVarBndrs ++ predVarBndr : caseVarBndrs ++ map PlainTV singVars
+           bndrs = dataVarBndrs ++ predVarBndr : caseVarBndrs ++ map plainTV singVars
            lhs   = foldAppT prefix $ VarT predVarName
                                    : foldAppT (ConT conName) (map VarT singVars)
                                    : map VarT caseVarNames
@@ -430,13 +432,13 @@ class Eliminator (t :: TermOrType) where
   -- Create an eliminator function's type.
   elimTypeSig ::
        proxy t
-    -> [TyVarBndr] -- The type variables bound by the data type
-    -> TyVarBndr   -- The predicate type variable
-    -> TyVarBndr   -- The type variable whose kind is that of the data type itself
-    -> [Type]      -- The types of each "case alternative" in the eliminator
-                   -- function's type signature
-    -> Type        -- The eliminator function's return type
-    -> Type        -- The full type
+    -> [TyVarBndrUnit] -- The type variables bound by the data type
+    -> TyVarBndrUnit   -- The predicate type variable
+    -> TyVarBndrUnit   -- The type variable whose kind is that of the data type itself
+    -> [Type]          -- The types of each "case alternative" in the eliminator
+                       -- function's type signature
+    -> Type            -- The eliminator function's return type
+    -> Type            -- The full type
 
   -- Take a data constructor's field type and prepend it to a "case
   -- alternative" in an eliminator function's type signature.
@@ -454,9 +456,9 @@ class Eliminator (t :: TermOrType) where
        proxy t
     -> Name              -- The name of the eliminator function
     -> Name              -- The name of the data type
-    -> [TyVarBndr]       -- The type variables bound by the data type
-    -> TyVarBndr         -- The predicate type variable
-    -> TyVarBndr         -- The type variable whose kind is that of the data type itself
+    -> [TyVarBndrUnit]   -- The type variables bound by the data type
+    -> TyVarBndrUnit     -- The predicate type variable
+    -> TyVarBndrUnit     -- The type variable whose kind is that of the data type itself
     -> [Type]            -- The types of each "case alternative" in the eliminator
                          -- function's type signature
     -> [ConstructorInfo] -- The data constructors
@@ -466,11 +468,12 @@ instance Eliminator IsTerm where
   elimSigD _ = SigD
 
   elimTypeSig _ dataVarBndrs predVarBndr singVarBndr caseTypes returnType =
-    ForallT (dataVarBndrs ++ [predVarBndr, singVarBndr]) [] $
+    ForallT (changeTVFlags SpecifiedSpec $
+             dataVarBndrs ++ [predVarBndr, singVarBndr]) [] $
     ravel (singType (tvName singVarBndr):caseTypes) returnType
 
   prependElimCaseTypeVar _ dataName predVar var varType t =
-    ForallT [KindedTV var varType] [] $
+    ForallT [kindedTVSpecified var varType] [] $
     ravel (singType var:maybeToList (mbInductiveType dataName predVar var varType)) t
 
   qElimEqns _ elimName dataName dataVarBndrs predVarBndr _singVarBndr _caseTypes cons
@@ -488,20 +491,20 @@ instance Eliminator IsType where
   elimSigD _ = KiSigD
 
   elimTypeSig _ dataVarBndrs predVarBndr singVarBndr caseTypes returnType =
-    ForallT dataVarBndrs [] $
+    ForallT (changeTVFlags SpecifiedSpec dataVarBndrs) [] $
     ForallVisT [predVarBndr, singVarBndr] $
     ravel caseTypes returnType
 
   prependElimCaseTypeVar _ dataName predVar var varType t =
-    ForallVisT [KindedTV var varType] $
+    ForallVisT [kindedTV var varType] $
     ravelDefun (maybeToList (mbInductiveType dataName predVar var varType)) t
 
   qElimEqns _ elimName dataName dataVarBndrs predVarBndr singVarBndr caseTypes cons = do
-    caseVarBndrs <- replicateM (length caseTypes) (PlainTV <$> newName "p")
+    caseVarBndrs <- replicateM (length caseTypes) (plainTV <$> newName "p")
     let predVar   = tvName predVarBndr
         singVar   = tvName singVarBndr
         tyFamHead = TypeFamilyHead elimName
-                      (PlainTV predVar:PlainTV singVar:caseVarBndrs)
+                      (plainTV predVar:plainTV singVar:caseVarBndrs)
                       NoSig Nothing
     caseEqns <- itraverse (\i -> caseTySynEqn elimName dataName
                                  dataVarBndrs predVarBndr i caseTypes) cons

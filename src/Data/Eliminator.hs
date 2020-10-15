@@ -61,8 +61,6 @@ module Data.Eliminator (
   , ElimNat
   , elimNonEmpty
   , ElimNonEmpty
-  , elimOption
-  , ElimOption
   , elimOrdering
   , ElimOrdering
   , elimProduct
@@ -93,24 +91,25 @@ import Control.Monad.Extra
 
 import Data.Eliminator.TH
 import Data.Functor.Const (Const(..))
+import Data.Functor.Const.Singletons (SConst(..))
 import Data.Functor.Identity (Identity(..))
+import Data.Functor.Identity.Singletons (SIdentity(..))
 import Data.List.NonEmpty (NonEmpty(..))
+import Data.List.NonEmpty.Singletons (SNonEmpty(..))
 import Data.Monoid hiding (First, Last)
+import Data.Monoid.Singletons hiding (SFirst, SLast)
 import Data.Nat
 import Data.Ord (Down(..))
+import Data.Ord.Singletons (SDown(..))
 import Data.Semigroup
-import Data.Singletons.Prelude hiding
-  (All, Any, Const, Last, Min, Max, Product, Sum)
-import Data.Singletons.Prelude.Const (SConst(..))
-import Data.Singletons.Prelude.Identity (SIdentity(..))
-import Data.Singletons.Prelude.List.NonEmpty (SNonEmpty(..))
-import Data.Singletons.Prelude.Monoid hiding (SFirst, SLast)
-import Data.Singletons.Prelude.Ord (SDown(..))
-import Data.Singletons.Prelude.Semigroup
+import Data.Semigroup.Singletons
 import Data.Void (Void)
 
 import Language.Haskell.TH (nameBase)
 import Language.Haskell.TH.Desugar (tupleNameDegree_maybe)
+
+import Prelude.Singletons hiding
+  (All, Any, Const, Last, Min, Max, Product, Sum)
 
 {- $eliminators
 
@@ -145,7 +144,6 @@ $(concatMapM (\n -> (++) <$> deriveElim n <*> deriveTypeElim n)
              , ''Min
              , ''Nat
              , ''NonEmpty
-             , ''Option
              , ''Ordering
              , ''Product
              , ''Sum

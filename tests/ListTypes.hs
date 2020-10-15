@@ -9,9 +9,9 @@
 module ListTypes where
 
 import Data.Kind
-import Data.Singletons.Prelude
-import Data.Singletons.Prelude.List
+import Data.List.Singletons
 import Data.Singletons.TH
+import Prelude.Singletons
 
 $(singletons [d|
   type WhyMapPreservesLength :: (x ~> y) -> [x] -> Type

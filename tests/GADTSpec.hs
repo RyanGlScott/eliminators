@@ -5,6 +5,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneKindSignatures #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -12,7 +13,8 @@
 module GADTSpec where
 
 import Data.Kind
-import Data.Singletons
+import Data.Singletons.TH
+import Data.Singletons.TH.Options
 
 import Internal
 
@@ -26,14 +28,12 @@ spec = pure ()
 
 -----
 
-type So :: Bool -> Type
-data So b where
-  Oh :: So True
-
-type SSo :: So what -> Type
-data SSo s where
-  SOh :: SSo Oh
-type instance Sing = SSo
+$(withOptions defaultOptions{genSingKindInsts = False} $
+  singletons [d|
+    type So :: Bool -> Type
+    data So b where
+      Oh :: So True
+  |])
 
 elimSo :: forall (p :: forall (long_sucker :: Bool). So long_sucker ~> Type)
                  (what :: Bool) (s :: So what).
@@ -67,16 +67,14 @@ type family ElimPropSo p s pOh where
   forall (p :: Bool ~> Prop) (pOh :: p @@ True).
     ElimPropSo p Oh pOh = pOh
 
-type Flarble :: Type -> Type -> Type
-data Flarble a b where
-  MkFlarble1 :: a -> Flarble a b
-  MkFlarble2 :: a ~ Bool => Flarble a (Maybe b)
-
-type SFlarble :: Flarble a b -> Type
-data SFlarble f where
-  SMkFlarble1 :: Sing x -> SFlarble (MkFlarble1 x)
-  SMkFlarble2 :: SFlarble MkFlarble2
-type instance Sing = SFlarble
+$(withOptions defaultOptions{genSingKindInsts = False} $
+  singletons [d|
+    type Flarble :: Type -> Type -> Type
+    data Flarble a b where
+      MkFlarble1 :: a -> Flarble a b
+      -- MkFlarble2 :: a ~ Bool => Flarble a (Maybe b)
+      MkFlarble2 :: Flarble Bool (Maybe b)
+  |])
 
 elimFlarble :: forall (p :: forall x y. Flarble x y ~> Type)
                       a b (f :: Flarble a b).
@@ -141,14 +139,12 @@ type family ElimPropFlarble p f pMkFlarble1 pMkFlarble2 where
     ElimPropFlarble p (MkFlarble2 :: Flarble Bool (Maybe b')) pMkFlarble1 pMkFlarble2 =
       pMkFlarble2 @b'
 
-type Obj :: Type
-data Obj where
-  MkObj :: o -> Obj
-
-type SObj :: Obj -> Type
-data SObj o where
-  SMkObj :: forall obiwan (obj :: obiwan). Sing obj -> SObj (MkObj obj)
-type instance Sing = SObj
+$(withOptions defaultOptions{genSingKindInsts = False} $
+  singletons [d|
+    type Obj :: Type
+    data Obj where
+      MkObj :: o -> Obj
+  |])
 
 elimObj :: forall (p :: Obj ~> Type) (o :: Obj).
            Sing o

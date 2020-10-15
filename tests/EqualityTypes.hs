@@ -10,27 +10,28 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 module EqualityTypes where
 
 import           Data.Kind
 import           Data.Singletons.TH
+import           Data.Singletons.TH.Options
 import           Data.Type.Equality ((:~~:)(..))
 
 import           Internal
 
-type (%:~:) :: a :~: b -> Type
-data (%:~:) e where
-  SRefl :: (%:~:) Refl
-type instance Sing = (%:~:)
+$(withOptions defaultOptions{genSingKindInsts = False} $
+  genSingletons [''(:~:), ''(:~~:)])
 
 instance SingKind (a :~: b) where
   type Demote (a :~: b) = a :~: b
   fromSing SRefl = Refl
   toSing Refl    = SomeSing SRefl
 
-instance SingI Refl where
-  sing = SRefl
+instance SingKind (a :~~: b) where
+  type Demote (a :~~: b) = a :~~: b
+  fromSing SHRefl = HRefl
+  toSing HRefl    = SomeSing SHRefl
 
 -- | Christine Paulin-Mohring's version of the J rule.
 (~>:~:) :: forall k (a :: k)
@@ -69,19 +70,6 @@ type (~>!:~:) :: forall k (a :: k).
               -> p @@ b
 type family (~>!:~:) p r pRefl where
   (~>!:~:) _ Refl pRefl = pRefl
-
-type (%:~~:) :: forall j k (a :: j) (b :: k). a :~~: b -> Type
-data (%:~~:) e where
-  SHRefl :: (%:~~:) HRefl
-type instance Sing = (%:~~:)
-
-instance SingKind (a :~~: b) where
-  type Demote (a :~~: b) = a :~~: b
-  fromSing SHRefl = HRefl
-  toSing HRefl    = SomeSing SHRefl
-
-instance SingI HRefl where
-  sing = SHRefl
 
 -- | Christine Paulin-Mohring's version of the J rule, but heterogeneously kinded.
 (~>:~~:) :: forall j (a :: j)

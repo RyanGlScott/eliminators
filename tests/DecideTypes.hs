@@ -16,8 +16,9 @@ module DecideTypes where
 import Data.Eliminator
 import Data.Kind
 import Data.Nat
-import Data.Singletons.Prelude
 import Data.Singletons.TH hiding (Decision(..))
+
+import Prelude.Singletons
 
 -- Due to https://github.com/goldfirere/singletons/issues/82, promoting the
 -- Decision data type from Data.Singletons.Decide is a tad awkward. To work

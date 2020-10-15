@@ -11,12 +11,13 @@ module DecideSpec where
 
 import Data.Eliminator
 import Data.Nat
-import Data.Singletons.Prelude
 import Data.Singletons.TH hiding (Decision(..))
 import Data.Type.Equality
 
 import EqualitySpec (cong, replace)
 import DecideTypes
+
+import Prelude.Singletons
 
 import Test.Hspec
 
@@ -120,8 +121,8 @@ listEqConsequencesSame sl = elimList @e @WhyListEqConsequencesSameSym0 @es sl ba
     base :: ListEqConsequences '[] '[]
     base = ()
 
-    step :: forall (x :: e) (xs :: [e]).
-            Sing x -> Sing xs
+    step :: forall (x :: e). Sing x
+         -> forall (xs :: [e]). Sing xs
          -> ListEqConsequences xs xs
          -> ListEqConsequences (x:xs) (x:xs)
     step _ _ _ = (Refl, Refl)
@@ -149,11 +150,11 @@ decEqNil ses = elimList @e @WhyDecEqNilSym0 @es ses base step
     base :: Decision ('[] :~: '[])
     base = Proved Refl
 
-    step :: forall (x :: e) (xs :: [e]).
-            Sing x -> Sing xs
+    step :: forall (x :: e). Sing x
+         -> forall (xs :: [e]). Sing xs
          -> Decision ('[] :~: xs)
          -> Decision ('[] :~: (x:xs))
-    step _ _ _ = Disproved (nilNotCons @e @x @xs)
+    step _ (_ :: Sing xs) _ = Disproved (nilNotCons @e @x @xs)
 
 intermixListEqs :: forall e (x :: e) (xs :: [e]) (y :: e) (ys :: [e]).
                    x :~: y -> xs :~: ys
@@ -202,19 +203,20 @@ decEqList f ses1 = runWhyDecEqList $ elimList @e @(TyCon1 WhyDecEqList) @es1 ses
     base :: WhyDecEqList '[]
     base = WhyDecEqList decEqNil
 
-    step :: forall (x :: e) (xs :: [e]).
-            Sing x -> Sing xs
+    step :: forall (x :: e). Sing x
+         -> forall (xs :: [e]). Sing xs
          -> WhyDecEqList xs
          -> WhyDecEqList (x:xs)
-    step sx sxs swhyXs = WhyDecEqList $ \(sl :: Sing l) ->
-                           elimList @e @(WhyDecEqConsSym2 x xs) @l sl
-                             stepBase stepStep
+    step sx (sxs :: Sing xs) swhyXs =
+      WhyDecEqList $ \(sl :: Sing l) ->
+        elimList @e @(WhyDecEqConsSym2 x xs) @l sl
+          stepBase stepStep
       where
         stepBase :: Decision ((x:xs) :~: '[])
         stepBase = Disproved $ consNotNil @e @x @xs
 
-        stepStep :: forall (y :: e) (ys :: [e]).
-                    Sing y -> Sing ys
+        stepStep :: forall (y :: e). Sing y
+                 -> forall (ys :: [e]). Sing ys
                  -> Decision ((x:xs) :~: ys)
                  -> Decision ((x:xs) :~: (y:ys))
         stepStep sy sys _ = decCongCons sx sxs

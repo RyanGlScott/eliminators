@@ -7,11 +7,11 @@
 module MatchabilizeSpec where
 
 import Data.Eliminator
-import Data.Singletons
-import Data.Singletons.Prelude
 import Data.Type.Equality
 
 import MatchabilizeTypes
+
+import Prelude.Singletons
 
 import Test.Hspec
 

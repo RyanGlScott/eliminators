@@ -10,13 +10,13 @@
 module ListSpec where
 
 import Data.Eliminator
-import Data.Singletons.Prelude
-import Data.Singletons.Prelude.List
+import Data.List.Singletons
 import Data.Type.Equality
 
 import EqualitySpec (cong)
-
 import ListTypes
+
+import Prelude.Singletons
 
 import Test.Hspec
 
@@ -37,8 +37,8 @@ mapPreservesLength
     base :: WhyMapPreservesLength f '[]
     base = Refl
 
-    step :: forall (s :: x) (ss :: [x]).
-            Sing s -> Sing ss
+    step :: forall (s :: x). Sing s
+         -> forall (ss :: [x]). Sing ss
          -> WhyMapPreservesLength f ss
          -> WhyMapPreservesLength f (s:ss)
     step _ _ = cong @_ @_ @((+@#@$$) 1)
@@ -53,8 +53,8 @@ mapFusion
     base :: WhyMapFusion f g '[]
     base = Refl
 
-    step :: forall (s :: x) (ss :: [x]).
-            Sing s -> Sing ss
+    step :: forall (s :: x). Sing s
+         -> forall (ss :: [x]). Sing ss
          -> WhyMapFusion f g ss
          -> WhyMapFusion f g (s:ss)
     step _ _ = cong @_ @_ @((:@#@$$) (f @@ (g @@ s)))

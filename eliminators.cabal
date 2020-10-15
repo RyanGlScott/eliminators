@@ -1,5 +1,5 @@
 name:                eliminators
-version:             0.7
+version:             0.8
 synopsis:            Dependently typed elimination functions using singletons
 description:         This library provides eliminators for inductive data types,
                      leveraging the power of the @singletons@ library to allow
@@ -16,7 +16,7 @@ category:            Dependent Types
 build-type:          Simple
 extra-source-files:  CHANGELOG.md, README.md
 cabal-version:       >=1.10
-tested-with:         GHC == 8.10.1
+tested-with:         GHC == 9.0.1
 
 source-repository head
   type:                git
@@ -26,13 +26,13 @@ library
   exposed-modules:     Data.Eliminator
                        Data.Eliminator.TH
                        Data.Eliminator.TypeNats
-  build-depends:       base             >= 4.14  && < 4.15
+  build-depends:       base             >= 4.15  && < 4.16
                      , extra            >= 1.4.2 && < 1.8
-                     , singletons       >= 2.7   && < 2.8
+                     , singletons-base  >= 3.0   && < 3.1
                      , singleton-nats   >= 0.4.2 && < 0.5
-                     , template-haskell >= 2.16  && < 2.17
-                     , th-abstraction   >= 0.3   && < 0.5
-                     , th-desugar       >= 1.11  && < 1.12
+                     , template-haskell >= 2.17  && < 2.18
+                     , th-abstraction   >= 0.4   && < 0.5
+                     , th-desugar       >= 1.12  && < 1.13
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall -Wcompat -Wno-unticked-promoted-constructors
@@ -52,11 +52,11 @@ test-suite spec
                        ListTypes
                        VecTypes
                        VecSpec
-  build-depends:       base           >= 4.14  && < 4.15
+  build-depends:       base            >= 4.15  && < 4.16
                      , eliminators
-                     , hspec          >= 2     && < 3
-                     , singletons     >= 2.7   && < 2.8
-                     , singleton-nats >= 0.4.2 && < 0.5
+                     , hspec           >= 2     && < 3
+                     , singletons-base >= 3.0   && < 3.1
+                     , singleton-nats  >= 0.4.2 && < 0.5
   build-tool-depends:  hspec-discover:hspec-discover
   hs-source-dirs:      tests
   default-language:    Haskell2010
