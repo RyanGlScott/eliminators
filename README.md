@@ -3,7 +3,7 @@
 [![Hackage Dependencies](https://img.shields.io/hackage-deps/v/eliminators.svg)](http://packdeps.haskellers.com/reverse/eliminators)
 [![Haskell Programming Language](https://img.shields.io/badge/language-Haskell-blue.svg)][Haskell.org]
 [![BSD3 License](http://img.shields.io/badge/license-BSD3-brightgreen.svg)][tl;dr Legal: BSD3]
-[![Build](https://img.shields.io/travis/RyanGlScott/eliminators.svg)](https://travis-ci.org/RyanGlScott/eliminators)
+[![Build Status](https://github.com/RyanGlScott/eliminators/workflows/Haskell-CI/badge.svg)](https://github.com/RyanGlScott/eliminators/actions?query=workflow%3AHaskell-CI)
 
 [Hackage: eliminators]:
   http://hackage.haskell.org/package/eliminators
