@@ -1,4 +1,4 @@
-## 0.8 [????.??.??]
+## 0.8 [2021.03.12]
 * Require `singletons-base-3.0` and GHC 9.0.
 * Remove eliminators for `Data.Semigroup.Option`, which is deprecated as of
   `base-4.15.0.0`.
