@@ -65,6 +65,8 @@ module Data.Eliminator (
   , ElimOrdering
   , elimProduct
   , ElimProduct
+  , elimProxy
+  , ElimProxy
   , elimSum
   , ElimSum
   , elimTuple0
@@ -101,6 +103,7 @@ import Data.Monoid.Singletons hiding (SFirst, SLast)
 import Data.Nat
 import Data.Ord (Down(..))
 import Data.Ord.Singletons (SDown(..))
+import Data.Proxy.Singletons (SProxy(..))
 import Data.Semigroup
 import Data.Semigroup.Singletons
 import Data.Void (Void)
@@ -146,6 +149,7 @@ $(concatMapM (\n -> (++) <$> deriveElim n <*> deriveTypeElim n)
              , ''NonEmpty
              , ''Ordering
              , ''Product
+             , ''Proxy
              , ''Sum
              , ''Void
              , ''WrappedMonoid
