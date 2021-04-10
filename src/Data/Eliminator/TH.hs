@@ -275,9 +275,10 @@ deriveElimNamed' ::
   -> Name    -- The name of the data type
   -> Q [Dec] -- The eliminator's type signature and body
 deriveElimNamed' prox funName dataName = do
-  info@(DatatypeInfo { datatypeVars    = dataVarBndrs
-                     , datatypeVariant = variant
-                     , datatypeCons    = cons
+  info@(DatatypeInfo { datatypeVars      = dataVarBndrs
+                     , datatypeInstTypes = instTys
+                     , datatypeVariant   = variant
+                     , datatypeCons      = cons
                      }) <- reifyDatatype dataName
   let noDataFamilies =
         fail "Eliminators for data family instances are currently not supported"
@@ -293,6 +294,8 @@ deriveElimNamed' prox funName dataName = do
       predVarBndr = kindedTV predVar (InfixT promDataKind ''(~>) (ConT ''Kind.Type))
       singVarBndr = kindedTV singVar promDataKind
   caseTypes <- traverse (caseType prox dataName predVar) cons
+  unless (length (findParams info) == length instTys) $
+    fail "Eliminators for polymorphically recursive data types are currently not supported"
   let returnType  = predType predVar (VarT singVar)
       elimType    = elimTypeSig prox dataVarBndrs predVarBndr singVarBndr
                                 caseTypes returnType
@@ -359,7 +362,7 @@ caseClause elimName dataName dataVarBndrs predVarBndr conIndex numCons
                             ++ [VarT (tvName predVarBndr), VarT singVarSig]
                  inductiveArg = foldAppE prefix
                                   $ VarE singVar:map VarE caseVars
-             in mbInductiveCase dataName varType inductiveArg
+             in mbInductiveCase dataName varType $ const inductiveArg
            mkArg f (singVar, singVarSig, varType) =
              foldAppE f $ VarE singVar
                         : maybeToList (mbInductiveArg singVar singVarSig varType)
@@ -403,7 +406,7 @@ caseTySynEqn elimName dataName dataVarBndrs predVarBndr conIndex caseTypes
              let inductiveArg = foldAppT prefix $ VarT predVarName
                                                 : VarT singVar
                                                 : map VarT caseVarNames
-             in mbInductiveCase dataName varType inductiveArg
+             in mbInductiveCase dataName varType $ const inductiveArg
            mkArg f (singVar, varType) =
              foldAppDefunT (f `AppT` VarT singVar)
                          $ maybeToList (mbInductiveArg singVar varType)
@@ -512,21 +515,20 @@ instance Eliminator IsType where
 
 mbInductiveType :: Name -> Name -> Name -> Kind -> Maybe Type
 mbInductiveType dataName predVar var varType =
-  mbInductiveCase dataName varType $ predType predVar $ VarT var
+  mbInductiveCase dataName varType $ const $ predType predVar $ VarT var
 
--- TODO: Rule out polymorphic recursion
-mbInductiveCase :: Name -> Type -> a -> Maybe a
+mbInductiveCase :: Name -> Type -> ([TypeArg] -> a) -> Maybe a
 mbInductiveCase dataName varType inductiveArg
   = case unfoldType varType of
-      (headTy, _)
+      (headTy, argTys)
           -- Annoying special case for lists
         | ListT <- headTy
         , dataName == ''[]
-       -> Just inductiveArg
+       -> Just $ inductiveArg argTys
 
         | ConT n <- headTy
         , dataName == n
-       -> Just inductiveArg
+       -> Just $ inductiveArg argTys
 
         | otherwise
        -> Nothing
@@ -602,6 +604,108 @@ ireplicateA cnt0 f =
     loop cnt n
         | cnt <= 0  = pure []
         | otherwise = liftA2 (:) (f n) (loop (cnt - 1) $! (n + 1))
+
+-- | Find the data type constructor arguments that are parameters.
+--
+-- Parameters are names which are unchanged across the structure.
+-- They appear at least once in every constructor type, always appear
+-- in the same argument position(s), and nothing else ever appears in those
+-- argument positions.
+--
+-- This was adapted from a similar algorithm used in Idris
+-- (https://github.com/idris-lang/Idris-dev/blob/a13caeb4e50d0c096d34506f2ebf6b9d140a07aa/src/Idris/Elab/Utils.hs#L401-L468),
+-- licensed under the BSD-3-Clause license.
+findParams :: DatatypeInfo -> [Int]
+findParams (DatatypeInfo { datatypeName      = dataName
+                         , datatypeInstTypes = instTys
+                         , datatypeCons      = cons
+                         }) =
+  let allapps = map getDataApp cons
+        -- do each constructor separately, then merge the results (names
+        -- may change between constructors)
+      conParams = map paramPos allapps
+  in inAll conParams
+  where
+    inAll :: Eq pos => [[pos]] -> [pos]
+    inAll [] = []
+    inAll (x : xs) = filter (\p -> all (\ps -> p `elem` ps) xs) x
+
+    paramPos :: Eq name => [[Maybe name]] -> [Int]
+    paramPos [] = []
+    paramPos (args : rest)
+          = dropNothing $ keepSame (zip [0..] args) rest
+
+    dropNothing :: [(pos, Maybe name)] -> [pos]
+    dropNothing [] = []
+    dropNothing ((_, Nothing) : ts) = dropNothing ts
+    dropNothing ((x, _) : ts) = x : dropNothing ts
+
+    keepSame :: Eq name =>
+                [(pos, Maybe name)] -> [[Maybe name]] ->
+                [(pos, Maybe name)]
+    keepSame as [] = as
+    keepSame as (args : rest) = keepSame (update as args) rest
+
+    update :: Eq name => [(pos, Maybe name)] -> [Maybe name] -> [(pos, Maybe name)]
+    update [] _ = []
+    update _ [] = []
+    update ((n, Just x) : as) (Just x' : args)
+        | x == x' = (n, Just x) : update as args
+    update ((n, _) : as) (_ : args) = (n, Nothing) : update as args
+
+    getDataApp :: ConstructorInfo -> [[Maybe Name]]
+    getDataApp (ConstructorInfo { constructorFields  = fields }) =
+      concatMap getThem $
+      fields ++ [ applyType (ConT dataName) $ map TANormal
+                                            $ map unSigType instTys
+                ]
+      where
+        getThem :: Type -> [[Maybe Name]]
+        getThem ty = maybeToList $ mbInductiveCase dataName ty inductiveArg
+
+        inductiveArg :: [TypeArg] -> [Maybe Name]
+        inductiveArg argTys =
+          let visArgTys = filterTANormals argTys
+          in mParam visArgTys visArgTys
+
+    -- keep the arguments which are single names, which appear
+    -- in the return type, counting only the first time they appear in
+    -- the return type as the parameter position
+    mParam :: [Type] -> [Type] -> [Maybe Name]
+    mParam _    [] = []
+    mParam args (VarT n:rest)
+      | paramIn False n args
+      = Just n : mParam (filter (noN n) args) rest
+    mParam args (_:rest) = Nothing : mParam args rest
+
+    paramIn :: Bool -> Name -> [Type] -> Bool
+    paramIn ok _ []          = ok
+    paramIn ok n (VarT t:ts) = paramIn (ok || n == t) n ts
+    paramIn ok n (t:ts)
+      | n `elem` freeVariables t = False -- not a single name
+      | otherwise                = paramIn ok n ts
+
+    -- If the name appears again later, don't count that appearance
+    -- as a parameter position
+    noN :: Name -> Type -> Bool
+    noN n (VarT t) = n /= t
+    noN _ _        = False
+
+-----
+-- Taken directly from th-desugar
+-----
+
+-- | Remove all of the explicit kind signatures from a 'Type'.
+unSigType :: Type -> Type
+unSigType (SigT t _)            = t
+unSigType (AppT f x)            = AppT (unSigType f) (unSigType x)
+unSigType (ForallT tvbs ctxt t) = ForallT tvbs (map unSigType ctxt) (unSigType t)
+unSigType (InfixT t1 n t2)      = InfixT (unSigType t1) n (unSigType t2)
+unSigType (UInfixT t1 n t2)     = UInfixT (unSigType t1) n (unSigType t2)
+unSigType (ParensT t)           = ParensT (unSigType t)
+unSigType (AppKindT t k)        = AppKindT (unSigType t) (unSigType k)
+unSigType (ImplicitParamT n t)  = ImplicitParamT n (unSigType t)
+unSigType t                     = t
 
 -----
 -- Taken directly from singletons
