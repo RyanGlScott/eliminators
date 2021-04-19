@@ -1,5 +1,9 @@
 ## next [????.??.??]
 * Add `{e,E}limProxy` to `Data.Eliminator`.
+* Add the `Data.Eliminator.Monoid` modules, which defines `{e,E}limFirst` and
+  `{e,E}limLast` eliminators that work over `First` and `Last` from
+  `Data.Monoid`. (By contrast, the `{e,E}limLast` eliminators from
+  `Data.Eliminator` work over `First` and `Last` from `Data.Semigroup`.)
 
 ## 0.8 [2021.03.12]
 * Require `singletons-base-3.0` and GHC 9.0.

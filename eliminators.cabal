@@ -24,6 +24,7 @@ source-repository head
 
 library
   exposed-modules:     Data.Eliminator
+                       Data.Eliminator.Monoid
                        Data.Eliminator.TH
                        Data.Eliminator.TypeNats
   build-depends:       base             >= 4.15  && < 4.16

@@ -23,6 +23,19 @@ Stability:   Experimental
 Portability: GHC
 
 Dependently typed elimination functions using @singletons@.
+
+This module exports a combination of eliminators whose names are known not to
+clash with each other. Potential name conflicts have been resolved by putting
+the conflicting names in separate modules:
+
+* "Data.Eliminator" defines 'elimNat', which works over the 'Nat' data type
+  from "Data.Nat". For an eliminator that works over 'Nat' from "GHC.TypeNats",
+  see "Data.Eliminator.TypeNats".
+
+* "Data.Eliminator" defines 'elimFirst' and 'elimLast', which work over the
+  'First' and 'Last' newtypes from "Data.Semigroup", respectively. For
+  eliminators that work over 'First' and 'Last' from "Data.Monoid", see
+  "Data.Eliminator.Monoid".
 -}
 module Data.Eliminator (
     -- * Eliminator functions
