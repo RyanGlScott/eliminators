@@ -53,9 +53,13 @@ elimVec :: forall a (p :: forall (k :: Nat). Vec a k ~> Type)
         -> (forall (k :: Nat) (x :: a) (xs :: Vec a k).
                    Sing x -> Sing xs -> p @@ xs -> p @@ (x :# xs))
         -> p @@ v
-elimVec SVNil pVNil _ = pVNil
-elimVec (sx :%# (sxs :: Sing (xs :: Vec a k))) pVNil pVCons =
-  pVCons sx sxs (elimVec @a @p @k @xs sxs pVNil pVCons)
+elimVec sv pVNil pVCons = go @n @v sv
+  where
+    go :: forall (n' :: Nat) (v' :: Vec a n').
+          Sing v' -> p @@ v'
+    go SVNil = pVNil
+    go (sx :%# (sxs :: Sing (xs :: Vec a k))) =
+      pVCons sx sxs (go @k @xs sxs)
 
 type ElimVec :: forall a.
                 forall (p :: forall (k :: Nat). Vec a k ~> Type)
@@ -86,9 +90,11 @@ elimPropVec :: forall a (p :: Nat ~> Prop) (n :: Nat).
             -> p @@ Z
             -> (forall (k :: Nat). a -> Vec a k -> p @@ k -> p @@ S k)
             -> p @@ n
-elimPropVec VNil pZ _ = pZ
-elimPropVec (x :# (xs :: Vec a k)) pZ pS =
-  pS x xs (elimPropVec @a @p @k xs pZ pS)
+elimPropVec v pZ pS = go @n v
+  where
+    go :: forall (n' :: Nat). Vec a n' -> p @@ n'
+    go VNil                   = pZ
+    go (x :# (xs :: Vec a k)) = pS x xs (go @k xs)
 
 type ElimPropVec :: forall a.
                     forall (p :: Nat ~> Prop)

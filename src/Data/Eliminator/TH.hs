@@ -331,44 +331,33 @@ caseType prox dataName predVar
                      returnType
                      (zip vars fieldTypes)
 
--- Generate a single clause for a term-level eliminator.
-caseClause ::
-     Name            -- The name of the eliminator function
+-- Generate a single clause for a term-level eliminator's @go@ function.
+goCaseClause ::
+     Name            -- The name of the @go@ function
   -> Name            -- The name of the data type
-  -> [TyVarBndrUnit] -- The type variables bound by the data type
-  -> TyVarBndrUnit   -- The predicate type variable
-  -> Int             -- The index of this constructor (0-indexed)
-  -> Int             -- The total number of data constructors
+  -> Name            -- The name of the "case alternative" to apply on the right-hand side
   -> ConstructorInfo -- The data constructor
   -> Q Clause        -- The generated function clause
-caseClause elimName dataName dataVarBndrs predVarBndr conIndex numCons
+goCaseClause goName dataName usedCaseVar
     (ConstructorInfo { constructorName   = conName
                      , constructorFields = fieldTypes })
   = do let numFields = length fieldTypes
        singVars    <- newNameList "s"   numFields
        singVarSigs <- newNameList "sTy" numFields
-       usedCaseVar <- newName "useThis"
-       caseVars    <- ireplicateA numCons $ \i ->
-                        if i == conIndex
-                        then pure usedCaseVar
-                        else newName ("_p" ++ show i)
        let singConName = singledDataConName defaultOptions conName
            mkSingVarPat var varSig = SigP (VarP var) (singType varSig)
            singVarPats = zipWith mkSingVarPat singVars singVarSigs
 
            mbInductiveArg singVar singVarSig varType =
-             let prefix = foldAppTypeE (VarE elimName)
-                             $ map (VarT . tvName) dataVarBndrs
-                            ++ [VarT (tvName predVarBndr), VarT singVarSig]
-                 inductiveArg = foldAppE prefix
-                                  $ VarE singVar:map VarE caseVars
+             let inductiveArg = VarE goName `AppTypeE` VarT singVarSig
+                                            `AppE`     VarE singVar
              in mbInductiveCase dataName varType $ const inductiveArg
            mkArg f (singVar, singVarSig, varType) =
              foldAppE f $ VarE singVar
                         : maybeToList (mbInductiveArg singVar singVarSig varType)
            rhs = foldl' mkArg (VarE usedCaseVar) $
                         zip3 singVars singVarSigs fieldTypes
-       pure $ Clause (ConP singConName singVarPats : map VarP caseVars)
+       pure $ Clause [ConP singConName singVarPats]
                      (NormalB rhs)
                      []
 
@@ -479,16 +468,40 @@ instance Eliminator IsTerm where
     ForallT [kindedTVSpecified var varType] [] $
     ravel (singType var:maybeToList (mbInductiveType dataName predVar var varType)) t
 
-  qElimEqns _ elimName dataName dataVarBndrs predVarBndr _singVarBndr _caseTypes cons
-    | null cons
-    = do singVal <- newName "singVal"
-         pure $ FunD elimName [Clause [VarP singVal]
-                               (NormalB (CaseE (VarE singVal) [])) []]
-    | otherwise
-    = do caseClauses
-           <- itraverse (\i -> caseClause elimName dataName
-                               dataVarBndrs predVarBndr i (length cons)) cons
-         pure $ FunD elimName caseClauses
+  -- A unique characteristic of term-level eliminators is that we manually
+  -- apply the static argument transformation, e.g.,
+  --
+  --   elimT :: forall a (p :: T a ~> Type) (t :: T a).
+  --            Sing t
+  --         -> (forall (x :: a) (xs :: T a).
+  --               Sing x -> Sing xs -> Apply p xs -> Apply p (MkT x xs))
+  --         -> Apply p t
+  --   elimT st k = go @s k
+  --     where
+  --       go :: forall (t' :: T a).
+  --             Sing t' -> Apply p t'
+  --       go (SMkT (sx :: Sing x) (sxs :: Sing xs)) =
+  --         k sx sxs (go @xs sxs)
+  --
+  -- This reduces the likelihood of recursive calls falling afoul of GHC's
+  -- ambiguity check.
+  qElimEqns _ elimName dataName _dataVarBndrs predVarBndr singVarBndr _caseTypes cons = do
+    singTermVar <- newName "s"
+    caseVars    <- newNameList "p" $ length cons
+    goName      <- newName "go"
+    let singTypeVar = tvName singVarBndr
+    goSingTypeVar <- newName $ nameBase singTypeVar
+    let elimRHS       = VarE goName `AppTypeE` VarT singTypeVar `AppE` VarE singTermVar
+        goSingVarBndr = mapTVName (const goSingTypeVar) singVarBndr
+        goReturnType  = predType (tvName predVarBndr) (VarT goSingTypeVar)
+        goType = ForallT (changeTVFlags SpecifiedSpec [goSingVarBndr]) [] $
+                 ArrowT `AppT` singType goSingTypeVar `AppT` goReturnType
+    goClauses
+      <- if null cons
+         then pure [Clause [VarP singTermVar] (NormalB (CaseE (VarE singTermVar) [])) []]
+         else zipWithM (goCaseClause goName dataName) caseVars cons
+    pure $ FunD elimName [ Clause (map VarP (singTermVar:caseVars)) (NormalB elimRHS)
+                                  [SigD goName goType, FunD goName goClauses] ]
 
 instance Eliminator IsType where
   elimSigD _ = KiSigD
@@ -574,10 +587,6 @@ ravelDefun args res = go args
 -- Apply an expression to a list of expressions using ordinary function applications.
 foldAppE :: Exp -> [Exp] -> Exp
 foldAppE = foldl' AppE
-
--- Apply an expression to a list of types using visible type applications.
-foldAppTypeE :: Exp -> [Type] -> Exp
-foldAppTypeE = foldl' AppTypeE
 
 -- Apply a type to a list of types using ordinary function applications.
 foldAppT :: Type -> [Type] -> Type

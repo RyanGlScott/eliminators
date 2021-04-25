@@ -51,6 +51,7 @@ test-suite spec
                        MatchabilizeTypes
                        ListSpec
                        ListTypes
+                       PolyRecTypes
                        VecTypes
                        VecSpec
   build-depends:       base            >= 4.15  && < 4.16

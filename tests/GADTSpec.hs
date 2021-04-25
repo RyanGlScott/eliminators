@@ -82,12 +82,16 @@ elimFlarble :: forall (p :: forall x y. Flarble x y ~> Type)
             -> (forall a' b' (x :: a'). Sing x -> p @@ (MkFlarble1 x :: Flarble a' b'))
             -> (forall b'. p @@ (MkFlarble2 :: Flarble Bool (Maybe b')))
             -> p @@ f
-elimFlarble s@(SMkFlarble1 sx) pMkFlarble1 _ =
-  case s of
-    (_ :: Sing (MkFlarble1 x :: Flarble a' b')) -> pMkFlarble1 @a' @b' @x sx
-elimFlarble s@SMkFlarble2 _ pMkFlarble2 =
-  case s of
-    (_ :: Sing (MkFlarble2 :: Flarble Bool (Maybe b'))) -> pMkFlarble2 @b'
+elimFlarble sf pMkFlarble1 pMkFlarble2 = go @a @b @f sf
+  where
+    go :: forall a' b' (f' :: Flarble a' b').
+          Sing f' -> p @@ f'
+    go s@(SMkFlarble1 sx) =
+      case s of
+        (_ :: Sing (MkFlarble1 x :: Flarble a'' b'')) -> pMkFlarble1 @a'' @b'' @x sx
+    go s@SMkFlarble2 =
+      case s of
+        (_ :: Sing (MkFlarble2 :: Flarble Bool (Maybe b''))) -> pMkFlarble2 @b''
 
 type ElimFlarble ::
      forall (p :: forall x y. Flarble x y ~> Type)
@@ -113,12 +117,15 @@ elimPropFlarble :: forall (p :: Type ~> Type ~> Prop) a b.
                 -> (forall a' b'. a' -> p @@ a' @@ b')
                 -> (forall b'. p @@ Bool @@ Maybe b')
                 -> p @@ a @@ b
-elimPropFlarble f@(MkFlarble1 x) pMkFlarble1 _ =
-  case f of
-    (_ :: Flarble a' b') -> pMkFlarble1 @a' @b' x
-elimPropFlarble f@MkFlarble2 _ pMkFlarble2 =
-  case f of
-    (_ :: Flarble Bool (Maybe b')) -> pMkFlarble2 @b'
+elimPropFlarble fl pMkFlarble1 pMkFlarble2 = go @a @b fl
+  where
+    go :: forall a' b'. Flarble a' b' -> p @@ a' @@ b'
+    go f@(MkFlarble1 x) =
+      case f of
+        (_ :: Flarble a'' b'') -> pMkFlarble1 @a'' @b'' x
+    go f@MkFlarble2 =
+      case f of
+        (_ :: Flarble Bool (Maybe b'')) -> pMkFlarble2 @b''
 
 type ElimPropFlarble ::
      forall (p :: Type ~> Type ~> Prop)

@@ -33,8 +33,11 @@ elimDecision :: forall a (p :: PDecision a ~> Type) (d :: PDecision a).
              -> (forall (yes :: a). Sing yes -> p @@ Proved yes)
              -> (forall (no :: a ~> Void). Sing no -> p @@ Disproved no)
              -> p @@ d
-elimDecision (SProved yes)   pProved _          = pProved yes
-elimDecision (SDisproved no) _       pDisproved = pDisproved no
+elimDecision sd pProved pDisproved = go @d sd
+  where
+    go :: forall (d' :: PDecision a). Sing d' -> p @@ d'
+    go (SProved yes)   = pProved yes
+    go (SDisproved no) = pDisproved no
 
 type ElimDecision :: forall a.
                      forall (p :: PDecision a ~> Type)
