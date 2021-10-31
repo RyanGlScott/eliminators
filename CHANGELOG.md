@@ -1,4 +1,4 @@
-## next [????.??.??]
+## 0.9 [2021.10.31]
 * Require `singletons-base-3.1` and GHC 9.2.
 * Add `{e,E}limProxy` to `Data.Eliminator`.
 * `Data.Eliminator` no longer exports `{e,E}limFirst` and `{e,E}limLast`
