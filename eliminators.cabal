@@ -16,7 +16,7 @@ category:            Dependent Types
 build-type:          Simple
 extra-source-files:  CHANGELOG.md, README.md
 cabal-version:       >=1.10
-tested-with:         GHC == 9.0.1
+tested-with:         GHC == 9.2.1
 
 source-repository head
   type:                git
@@ -27,13 +27,13 @@ library
                        Data.Eliminator.Monoid
                        Data.Eliminator.TH
                        Data.Eliminator.TypeNats
-  build-depends:       base             >= 4.15  && < 4.16
+  build-depends:       base             >= 4.16  && < 4.17
                      , extra            >= 1.4.2 && < 1.8
-                     , singletons-base  >= 3.0   && < 3.1
+                     , singletons-base  >= 3.1   && < 3.2
                      , singleton-nats   >= 0.4.2 && < 0.5
-                     , template-haskell >= 2.17  && < 2.18
+                     , template-haskell >= 2.18  && < 2.19
                      , th-abstraction   >= 0.4   && < 0.5
-                     , th-desugar       >= 1.12  && < 1.13
+                     , th-desugar       >= 1.13  && < 1.14
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall -Wcompat -Wno-unticked-promoted-constructors
@@ -54,10 +54,10 @@ test-suite spec
                        PolyRecTypes
                        VecTypes
                        VecSpec
-  build-depends:       base            >= 4.15  && < 4.16
+  build-depends:       base            >= 4.16  && < 4.17
                      , eliminators
                      , hspec           >= 2     && < 3
-                     , singletons-base >= 3.0   && < 3.1
+                     , singletons-base >= 3.1   && < 3.2
                      , singleton-nats  >= 0.4.2 && < 0.5
   build-tool-depends:  hspec-discover:hspec-discover
   hs-source-dirs:      tests

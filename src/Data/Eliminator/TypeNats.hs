@@ -21,7 +21,7 @@ module Data.Eliminator.TypeNats (elimNat) where
 import Data.Kind (Type)
 import Data.Singletons
 
-import GHC.TypeLits.Singletons
+import GHC.TypeLits.Singletons ()
 import GHC.TypeNats
 
 import Unsafe.Coerce (unsafeCoerce)

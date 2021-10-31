@@ -11,6 +11,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-unused-foralls #-}
 module DecideTypes where
 
 import Data.Eliminator
@@ -18,7 +19,7 @@ import Data.Kind
 import Data.Nat
 import Data.Singletons.TH hiding (Decision(..))
 
-import Prelude.Singletons
+import Prelude.Singletons (ConstSym1)
 
 -- Due to https://github.com/goldfirere/singletons/issues/82, promoting the
 -- Decision data type from Data.Singletons.Decide is a tad awkward. To work
@@ -92,44 +93,71 @@ type WhyDecEqList :: [e] -> Type
 newtype WhyDecEqList (l1 :: [e]) = WhyDecEqList
   { runWhyDecEqList :: forall (l2 :: [e]). Sing l2 -> Decision (l1 :~: l2) }
 
-$(singletons [d|
-  type ConstVoidNat :: forall (m :: Nat) -> Const Type m -> Const Type (S m)
-  type ConstVoidNat m r = Void
+type ConstVoidNat :: Nat -> Type -> Type
+type ConstVoidNat m r = Void
 
-  type EqSameNat :: Nat -> forall (m :: Nat) -> Const Type m -> Const Type (S m)
-  type EqSameNat n m r = n :~: m
+-- ElimNat requires an argument of kind (forall (m :: Nat) -> ...), which is
+-- not the same thing as (Nat -> ...). Unfortunately, it's not easy to convince
+-- singletons-th to generate defunctionalization symbols for ConstVoidNat that
+-- have a dependent kind like this. As a result, we have to define
+-- defunctionalization symbols by hand with the appropriate kind.
+type ConstVoidNatSym :: forall (m :: Nat) -> (Type ~> Type)
+data ConstVoidNatSym m z
+type instance Apply (ConstVoidNatSym m) r = ConstVoidNat m r
 
-  type ConstVoidList :: forall e. forall (y :: e) (ys :: [e])
-                     -> Const Type ys -> Const Type (y:ys)
-  type ConstVoidList y ys r = Void
+type EqSameNat :: Nat -> Nat -> Type -> Type
+type EqSameNat n m r = n :~: m
 
-  type EqSameList :: forall e. e -> [e] -> forall (y :: e) (ys :: [e])
-                  -> Const Type ys -> Const Type (y:ys)
-  type EqSameList x xs y ys r = (x :~: y, xs :~: ys)
-  |])
+type EqSameNatSym :: Nat -> forall (m :: Nat) -> (Type ~> Type)
+data EqSameNatSym n m z
+type instance Apply (EqSameNatSym n m) r = EqSameNat n m r
+
+type ConstVoidList :: e -> [e] -> Type -> Type
+type ConstVoidList y ys r = Void
+
+type ConstVoidListSym :: forall e. forall (y :: e) (ys :: [e])
+                      -> (Type ~> Type)
+data ConstVoidListSym y ys z
+type instance Apply (ConstVoidListSym y ys) r = ConstVoidList y ys r
+
+type EqSameList :: e -> [e] -> e -> [e] -> Type -> Type
+type EqSameList x xs y ys r = (x :~: y, xs :~: ys)
+
+type EqSameListSym :: forall e. e -> [e] -> forall (y :: e) (ys :: [e])
+                   -> (Type ~> Type)
+data EqSameListSym x xs y ys z
+type instance Apply (EqSameListSym x xs y ys) r = EqSameList x xs y ys r
 
 $(singletons [d|
   type NatEqConsequencesBase :: Nat -> Type
-  type NatEqConsequencesBase m = ElimNat (ConstSym1 Type) m () ConstVoidNatSym1
+  type NatEqConsequencesBase m = ElimNat (ConstSym1 Type) m () ConstVoidNatSym
 
-  type NatEqConsequencesStep :: forall (m :: Nat) -> Const (Nat ~> Type) m
-                             -> Nat -> Const Type (S m)
-  type NatEqConsequencesStep m r n = ElimNat (ConstSym1 Type) n Void (EqSameNatSym2 m)
+  type NatEqConsequencesStep :: Nat -> (Nat ~> Type) -> Nat -> Type
+  type NatEqConsequencesStep m r n = ElimNat (ConstSym1 Type) n Void (EqSameNatSym m)
 
   type ListEqConsequencesBase :: [e] -> Type
-  type ListEqConsequencesBase ys = ElimList (ConstSym1 Type) ys () ConstVoidListSym2
+  type ListEqConsequencesBase ys = ElimList (ConstSym1 Type) ys () ConstVoidListSym
 
-  type ListEqConsequencesStep :: forall e. forall (x :: e) (xs :: [e])
-                              -> Const ([e] ~> Type) xs -> [e] -> Const Type (x:xs)
-  type ListEqConsequencesStep x xs r ys = ElimList (ConstSym1 Type) ys Void (EqSameListSym4 x xs)
+  type ListEqConsequencesStep :: e -> [e] -> ([e] ~> Type) -> [e] -> Type
+  type ListEqConsequencesStep x xs r ys = ElimList (ConstSym1 Type) ys Void (EqSameListSym x xs)
   |])
+
+type NatEqConsequencesStepSym :: forall (m :: Nat)
+                              -> (Nat ~> Type) ~> (Nat ~> Type)
+data NatEqConsequencesStepSym m z
+type instance Apply (NatEqConsequencesStepSym m) r = NatEqConsequencesStepSym2 m r
+
+type ListEqConsequencesStepSym :: forall e. forall (x :: e) (xs :: [e])
+                               -> ([e] ~> Type) ~> ([e] ~> Type)
+data ListEqConsequencesStepSym x xs z
+type instance Apply (ListEqConsequencesStepSym x xs) r = ListEqConsequencesStepSym3 x xs r
 
 $(singletons [d|
   type NatEqConsequences :: Nat -> Nat -> Type
   type NatEqConsequences n m =
     ElimNat (ConstSym1 (Nat ~> Type)) n
             NatEqConsequencesBaseSym0
-            NatEqConsequencesStepSym1 @@ m
+            NatEqConsequencesStepSym @@ m
 
   type WhyNatEqConsequencesSame :: Nat -> Type
   type WhyNatEqConsequencesSame a = NatEqConsequences a a
@@ -144,7 +172,7 @@ $(singletons [d|
   type ListEqConsequences (xs :: [e]) (ys :: [e]) =
     ElimList (ConstSym1 ([e] ~> Type)) xs
              ListEqConsequencesBaseSym0
-             ListEqConsequencesStepSym2 @@ ys
+             ListEqConsequencesStepSym @@ ys
 
   type WhyListEqConsequencesSame :: [e] -> Type
   type WhyListEqConsequencesSame es = ListEqConsequences es es

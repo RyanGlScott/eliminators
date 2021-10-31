@@ -1,4 +1,5 @@
 ## next [????.??.??]
+* Require `singletons-base-3.1` and GHC 9.2.
 * Add `{e,E}limProxy` to `Data.Eliminator`.
 * Add the `Data.Eliminator.Monoid` modules, which defines `{e,E}limFirst` and
   `{e,E}limLast` eliminators that work over `First` and `Last` from

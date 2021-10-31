@@ -357,7 +357,7 @@ goCaseClause goName dataName usedCaseVar
                         : maybeToList (mbInductiveArg singVar singVarSig varType)
            rhs = foldl' mkArg (VarE usedCaseVar) $
                         zip3 singVars singVarSigs fieldTypes
-       pure $ Clause [ConP singConName singVarPats]
+       pure $ Clause [ConP singConName [] singVarPats]
                      (NormalB rhs)
                      []
 
