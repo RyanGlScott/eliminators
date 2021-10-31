@@ -32,10 +32,20 @@ the conflicting names in separate modules:
   from "Data.Nat". For an eliminator that works over 'Nat' from "GHC.TypeNats",
   see "Data.Eliminator.TypeNats".
 
-* "Data.Eliminator" defines 'elimFirst' and 'elimLast', which work over the
-  'First' and 'Last' newtypes from "Data.Semigroup", respectively. For
-  eliminators that work over 'First' and 'Last' from "Data.Monoid", see
-  "Data.Eliminator.Monoid".
+* "Data.Eliminator" avoids exporting eliminators for @First@ and @Last@ data
+  types, as there are multiple data types with these names. If you want
+  eliminators for the 'First' and 'Last' data types from "Data.Monoid", import
+  them from "Data.Eliminator.Monoid". If you want eliminators for the 'First'
+  and 'Last' data types from "Data.Semigroup", import them from
+  "Data.Eliminator.Semigroup".
+
+* "Data.Eliminator" avoids exporting eliminators for @Product@ and @Sum@ data
+  types, as there are multiple data types with these names. If you want
+  eliminators for the 'Product' and 'Sum' data types from "Data.Monoid" or
+  "Data.Semigroup", import them from "Data.Eliminator.Monoid" or
+  "Data.Eliminator.Semigroup". If you want eliminators for the 'Product' and
+  'Sum' data types from "Data.Functor.Product" and "Data.Functor.Sum",
+  respectively, import them from "Data.Eliminator.Functor".
 -}
 module Data.Eliminator (
     -- * Eliminator functions
@@ -56,12 +66,8 @@ module Data.Eliminator (
   , ElimDual
   , elimEither
   , ElimEither
-  , elimFirst
-  , ElimFirst
   , elimIdentity
   , ElimIdentity
-  , elimLast
-  , ElimLast
   , elimList
   , ElimList
   , elimMax
@@ -76,12 +82,8 @@ module Data.Eliminator (
   , ElimNonEmpty
   , elimOrdering
   , ElimOrdering
-  , elimProduct
-  , ElimProduct
   , elimProxy
   , ElimProxy
-  , elimSum
-  , ElimSum
   , elimTuple0
   , ElimTuple0
   , elimTuple2
@@ -104,28 +106,22 @@ module Data.Eliminator (
 
 import Control.Monad.Extra
 
+import Data.Eliminator.Functor
+import Data.Eliminator.Monoid
+import Data.Eliminator.Semigroup
 import Data.Eliminator.TH
-import Data.Functor.Const (Const(..))
-import Data.Functor.Const.Singletons (SConst(..))
-import Data.Functor.Identity (Identity(..))
-import Data.Functor.Identity.Singletons (SIdentity(..))
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.List.NonEmpty.Singletons (SNonEmpty(..))
-import Data.Monoid hiding (First, Last)
-import Data.Monoid.Singletons hiding (SFirst, SLast)
 import Data.Nat
 import Data.Ord (Down(..))
 import Data.Ord.Singletons (SDown(..))
 import Data.Proxy.Singletons (SProxy(..))
-import Data.Semigroup
-import Data.Semigroup.Singletons
 import Data.Void (Void)
 
 import Language.Haskell.TH (nameBase)
 import Language.Haskell.TH.Desugar (tupleNameDegree_maybe)
 
-import Prelude.Singletons hiding
-  (All, Any, Const, Last, Min, Max, Product, Sum)
+import Prelude.Singletons
 
 {- $eliminators
 
@@ -144,28 +140,15 @@ The naming conventions are:
 -}
 
 $(concatMapM (\n -> (++) <$> deriveElim n <*> deriveTypeElim n)
-             [ ''All
-             , ''Any
-             , ''Arg
-             , ''Bool
-             , ''Const
+             [ ''Bool
              , ''Down
-             , ''Dual
              , ''Either
-             , ''First
-             , ''Identity
-             , ''Last
-             , ''Max
              , ''Maybe
-             , ''Min
              , ''Nat
              , ''NonEmpty
              , ''Ordering
-             , ''Product
              , ''Proxy
-             , ''Sum
              , ''Void
-             , ''WrappedMonoid
              ])
 $(deriveElimNamed     "elimList" ''[])
 $(deriveTypeElimNamed "ElimList" ''[])

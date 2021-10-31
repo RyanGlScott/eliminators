@@ -1,10 +1,18 @@
 ## next [????.??.??]
 * Require `singletons-base-3.1` and GHC 9.2.
 * Add `{e,E}limProxy` to `Data.Eliminator`.
-* Add the `Data.Eliminator.Monoid` modules, which defines `{e,E}limFirst` and
-  `{e,E}limLast` eliminators that work over `First` and `Last` from
-  `Data.Monoid`. (By contrast, the `{e,E}limLast` eliminators from
-  `Data.Eliminator` work over `First` and `Last` from `Data.Semigroup`.)
+* `Data.Eliminator` no longer exports `{e,E}limFirst` and `{e,E}limLast`
+  eliminators. If you wish to use eliminators that work over `First`/`Last`
+  from `Data.Monoid`, you must import them `Data.Eliminator.Monoid`. If you
+  wish to use eliminators that over `First`/`Last` from `Data.Semigroup`, you
+  must import them from the new `Data.Eliminator.Semigroup` module.
+* `Data.Eliminator` no longer exports `{e,E}limProduct` and `{e,E}limSum`
+  eliminators. If you wish to use eliminators that work over `Product`/`Sum`
+  from `Data.Monoid` or `Data.Semigroup`, you must import them
+  `Data.Eliminator.Monoid` or `Data.Eliminator.Semigroup`. If you wish to use
+  eliminators that over `Product`/`Sum` from
+  `Data.Functor.Product`/`Data.Functor.Sum`, you must import them from the new
+  `Data.Eliminator.Functor` module.
 
 ## 0.8 [2021.03.12]
 * Require `singletons-base-3.0` and GHC 9.0.
