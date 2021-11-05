@@ -1,4 +1,3 @@
-{-# LANGUAGE StandaloneKindSignatures #-}
 module Internal where
 
 import Data.Kind
