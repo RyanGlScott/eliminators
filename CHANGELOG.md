@@ -1,3 +1,8 @@
+### next [????.??.??]
+* Add `Data.Eliminator.TypeLits`, which re-exports
+  `Data.Eliminator.TypeNats.elimNat` and adds a new `elimSymbol` eliminator
+  for `GHC.TypeLits.Symbol`.
+
 ## 0.9 [2021.10.31]
 * Require `singletons-base-3.1` and GHC 9.2.
 * Add `{e,E}limProxy` to `Data.Eliminator`.
