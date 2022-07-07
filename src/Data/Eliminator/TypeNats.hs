@@ -28,8 +28,11 @@ elimNat :: forall (p :: Nat ~> Type) (n :: Nat).
         -> Apply p 0
         -> (forall (k :: Nat). Sing k -> Apply p k -> Apply p (k + 1))
         -> Apply p n
-elimNat snat pZ pS =
-  case fromSing snat of
-    0        -> unsafeCoerce pZ
-    nPlusOne -> withSomeSing (pred nPlusOne) $ \(sn :: Sing k) ->
-                  unsafeCoerce (pS sn (elimNat @p @k sn pZ pS))
+elimNat snat pZ pS = go @n snat
+  where
+    go :: forall (n' :: Nat). Sing n' -> Apply p n'
+    go snat' =
+      case fromSing snat' of
+        0        -> unsafeCoerce pZ
+        nPlusOne -> withSomeSing (pred nPlusOne) $ \(sk :: Sing k) ->
+                      unsafeCoerce (pS sk (go @k sk))
