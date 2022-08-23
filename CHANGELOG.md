@@ -1,4 +1,5 @@
-### next [????.??.??]
+### 0.9.1 [2022.08.23]
+* Require GHC 9.4.
 * Add `Data.Eliminator.TypeLits`, which re-exports
   `Data.Eliminator.TypeNats.elimNat` and adds a new `elimSymbol` eliminator
   for `GHC.TypeLits.Symbol`.
