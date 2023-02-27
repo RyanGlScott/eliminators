@@ -1,4 +1,4 @@
-### next [????.??.??]
+### 0.9.2 [2023.02.27]
 * Support building with `th-abstraction-0.5.*`.
 
 ### 0.9.1 [2022.08.23]
