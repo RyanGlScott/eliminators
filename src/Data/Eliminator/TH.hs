@@ -34,7 +34,7 @@ import           Data.Proxy
 import           Data.Singletons.TH.Options
 
 import           Language.Haskell.TH
-import           Language.Haskell.TH.Datatype
+import           Language.Haskell.TH.Datatype as Datatype
 import           Language.Haskell.TH.Datatype.TyVarBndr
 import           Language.Haskell.TH.Desugar hiding (NewOrData(..))
 
@@ -281,10 +281,11 @@ deriveElimNamed' prox funName dataName = do
   let noDataFamilies =
         fail "Eliminators for data family instances are currently not supported"
   case variant of
-    DataInstance    -> noDataFamilies
-    NewtypeInstance -> noDataFamilies
-    Datatype        -> pure ()
-    Newtype         -> pure ()
+    DataInstance      -> noDataFamilies
+    NewtypeInstance   -> noDataFamilies
+    Datatype          -> pure ()
+    Newtype           -> pure ()
+    Datatype.TypeData -> pure ()
   predVar <- newName "p"
   singVar <- newName "s"
   let elimName = mkName funName

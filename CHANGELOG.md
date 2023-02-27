@@ -1,3 +1,6 @@
+### next [????.??.??]
+* Support building with `th-abstraction-0.5.*`.
+
 ### 0.9.1 [2022.08.23]
 * Require GHC 9.4.
 * Add `Data.Eliminator.TypeLits`, which re-exports
