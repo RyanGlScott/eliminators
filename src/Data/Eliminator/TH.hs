@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TemplateHaskellQuotes #-}
 {-# LANGUAGE Unsafe #-}
@@ -285,7 +286,9 @@ deriveElimNamed' prox funName dataName = do
     NewtypeInstance   -> noDataFamilies
     Datatype          -> pure ()
     Newtype           -> pure ()
+#if MIN_VERSION_th_abstraction(0,5,0)
     Datatype.TypeData -> pure ()
+#endif
   predVar <- newName "p"
   singVar <- newName "s"
   let elimName = mkName funName
