@@ -24,7 +24,6 @@ module Data.Eliminator.TH (
   , deriveTypeElimNamed
   ) where
 
-import           Control.Applicative
 import           Control.Monad
 
 import           Data.Char (isLetter, isUpper, toUpper)
@@ -37,7 +36,7 @@ import           Data.Singletons.TH.Options
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Datatype as Datatype
 import           Language.Haskell.TH.Datatype.TyVarBndr
-import           Language.Haskell.TH.Desugar hiding (NewOrData(..))
+import           Language.Haskell.TH.Desugar hiding (DataFlavor(..))
 
 import           Prelude.Singletons
 

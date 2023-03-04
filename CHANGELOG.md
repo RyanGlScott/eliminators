@@ -1,3 +1,6 @@
+### next [????.??.??]
+* Require `singletons-base-3.2` and GHC 9.6.
+
 ### 0.9.2 [2023.02.27]
 * Support building with `th-abstraction-0.5.*`.
 
