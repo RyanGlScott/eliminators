@@ -1,5 +1,5 @@
 name:                eliminators
-version:             0.9.2
+version:             0.9.3
 synopsis:            Dependently typed elimination functions using singletons
 description:         This library provides eliminators for inductive data types,
                      leveraging the power of the @singletons@ library to allow
