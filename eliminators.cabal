@@ -35,7 +35,7 @@ library
                      , singletons-base  >= 3.2   && < 3.3
                      , singleton-nats   >= 0.4.2 && < 0.5
                      , template-haskell >= 2.20  && < 2.21
-                     , text             >= 2.0.1 && < 2.1
+                     , text             >= 2.0.1 && < 2.2
                      , th-abstraction   >= 0.4   && < 0.6
                      , th-desugar       >= 1.15  && < 1.16
   hs-source-dirs:      src
