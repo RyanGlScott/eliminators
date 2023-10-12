@@ -726,13 +726,29 @@ unSigType t                     = t
 upcase :: String -> String
 upcase str
   | isHsLetter first
-  = toUpper first : tail str
+  = toUpper first : tailNameStr str
 
   | otherwise
   = str
   where
-    first = head str
+    first = headNameStr str
 
 -- is it a letter or underscore?
 isHsLetter :: Char -> Bool
 isHsLetter c = isLetter c || c == '_'
+
+-- Return the first character in a Name's string (i.e., nameBase).
+-- Precondition: the string is non-empty.
+headNameStr :: String -> Char
+headNameStr str =
+  case str of
+    (c:_) -> c
+    [] -> error "headNameStr: Expected non-empty string"
+
+-- Drop the first character in a Name's string (i.e., nameBase).
+-- Precondition: the string is non-empty.
+tailNameStr :: String -> String
+tailNameStr str =
+  case str of
+    (_:cs) -> cs
+    [] -> error "tailNameStr: Expected non-empty string"
