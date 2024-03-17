@@ -36,7 +36,7 @@ library
                      , singleton-nats   >= 0.4.2 && < 0.5
                      , template-haskell >= 2.21  && < 2.22
                      , text             >= 2.0.1 && < 2.2
-                     , th-abstraction   >= 0.4   && < 0.7
+                     , th-abstraction   >= 0.4   && < 0.8
                      , th-desugar       >= 1.16  && < 1.17
   hs-source-dirs:      src
   default-language:    GHC2021
