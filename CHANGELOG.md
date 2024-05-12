@@ -1,3 +1,6 @@
+### next [????.??.??]
+* Require `singletons-base-3.4` and GHC 9.10.
+
 ### 0.9.4 [2023.10.13]
 * Require `singletons-base-3.3` and GHC 9.8.
 

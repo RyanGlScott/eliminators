@@ -2,6 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeAbstractions #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 module VecTypes where
